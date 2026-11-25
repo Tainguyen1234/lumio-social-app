@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#100b20"><meta name="description" content="LUMIO — Connect, Play, Vibe">
+  <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg">
+  <title>LUMIO — Connect • Play • Vibe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient a1"></div><div class="ambient a2"></div>
+  <header class="topbar"><a class="brand" href="#"><span class="brandmark">∞</span><span>LUMIO</span></a><span class="tagline">CONNECT · PLAY · VIBE</span><button id="authButton" class="ghost small">Đăng nhập</button></header>
+  <main>
+    <section id="welcome" class="welcome panel">
+      <div class="eyebrow">YOUR WORLD. YOUR VIBE.</div><h1>Gặp gỡ. Chơi cùng.<br><span>Kết nối khác biệt.</span></h1>
+      <p>LUMIO là không gian giải trí xã hội để bạn khám phá những người thú vị qua cảm xúc, trò chơi và trò chuyện.</p>
+      <div class="welcome-actions"><button id="startButton" class="primary">Khám phá LUMIO <span>↗</span></button><button id="demoButton" class="secondary">Dùng thử bản demo</button></div>
+      <div class="trustline"><span>✦</span> Kết nối theo sở thích · Tôn trọng quyền riêng tư</div>
+      <div class="orb-wrap"><div class="orb"><span>∞</span></div><i class="spark s1">✦</i><i class="spark s2">✧</i></div>
+    </section>
+
+    <section id="app" class="app hidden">
+      <div class="hello"><div><div class="eyebrow">LUMIO COMMUNITY</div><h2 id="greeting">Xin chào ✨</h2><p>Hôm nay bạn muốn kết nối thế nào?</p></div><div class="avatar" id="myAvatar">L</div></div>
+      <nav class="tabs">
+        <button class="tab active" data-tab="discover">⌕<span>Khám phá</span></button>
+        <button class="tab" data-tab="mood">✧<span>Tâm trạng</span></button>
+        <button class="tab" data-tab="play">◈<span>Trò chơi</span></button>
+        <button class="tab" data-tab="rooms">◉<span>Phòng</span></button>
+        <button class="tab" data-tab="profile">♙<span>Cá nhân</span></button>
+      </nav>
+      <section id="view-discover" class="view">
+        <div class="section-head"><div><h3>Khám phá cộng đồng</h3><p>Những người có thể hợp vibe với bạn</p></div><span class="live-pill">● LIVE</span></div>
+        <div class="filters"><button class="chip selected">Dành cho bạn</button><button class="chip">Toàn cầu</button><button class="chip">Cùng sở thích</button></div>
+        <div id="people" class="people"></div>
+      </section>
+      <section id="view-mood" class="view hidden">
+        <div class="section-head"><div><h3>Mood Match</h3><p>Chọn cảm xúc để tìm người cùng tần số</p></div></div>
+        <div class="mood-grid">
+          <button class="mood" data-mood="Vui vẻ"><b>☀</b><strong>Vui vẻ</strong><small>Muốn lan tỏa năng lượng</small></button>
+          <button class="mood" data-mood="Tâm sự"><b>☾</b><strong>Tâm sự</strong><small>Muốn có người lắng nghe</small></button>
+          <button class="mood" data-mood="Khám phá"><b>✧</b><strong>Khám phá</strong><small>Sẵn sàng gặp người mới</small></button>
+          <button class="mood" data-mood="Chill"><b>♫</b><strong>Chill</strong><small>Âm nhạc và thư giãn</small></button>
+        </div><p id="moodResult" class="notice">Chọn một tâm trạng để cập nhật hồ sơ của bạn.</p>
+      </section>
+      <section id="view-play" class="view hidden">
+        <div class="section-head"><div><h3>Duo Quest</h3><p>Câu hỏi vui để phá băng cuộc trò chuyện</p></div></div>
+        <div class="quest-card"><div class="quest-icon">✦</div><div class="eyebrow">DAILY ICEBREAKER</div><h2 id="question">Nếu có thể đi bất cứ đâu cuối tuần này, bạn sẽ chọn nơi nào?</h2><button id="nextQuestion" class="primary">Câu hỏi tiếp theo ↗</button></div>
+        <p class="notice">Bản MVP hiện có trò chơi câu hỏi đơn. Thử thách hai người đồng bộ sẽ được bổ sung khi phần chat và realtime được cấu hình.</p>
+      </section>
+      <section id="view-rooms" class="view hidden">
+        <div class="section-head"><div><h3>Vibe Rooms</h3><p>Chọn chủ đề bạn muốn tham gia</p></div></div>
+        <div class="room-list">
+          <article class="room"><div class="room-icon pink">♫</div><div><b>Chill & Music</b><small>Âm nhạc · Giao lưu</small></div><span>24 người</span></article>
+          <article class="room"><div class="room-icon blue">◎</div><div><b>Global Lounge</b><small>Ngôn ngữ · Văn hóa</small></div><span>18 người</span></article>
+          <article class="room"><div class="room-icon gold">◇</div><div><b>Game Zone</b><small>Mini game · Thử thách</small></div><span>12 người</span></article>
+        </div><p class="notice">Danh sách phòng hiện là nội dung mẫu. Phòng thoại trực tiếp cần tích hợp dịch vụ voice/WebRTC ở giai đoạn tiếp theo.</p>
+      </section>
+      <section id="view-profile" class="view hidden">
+        <div class="section-head"><div><h3>Hồ sơ của tôi</h3><p>Giới thiệu một chút về bạn</p></div></div>
+        <form id="profileForm" class="profile-form"><label>Tên hiển thị<input id="displayName" maxlength="30" placeholder="Tên bạn muốn mọi người gọi" required></label><label>Giới thiệu<textarea id="bio" maxlength="160" placeholder="Một điều thú vị về bạn..."></textarea></label><label>Quốc gia<input id="country" maxlength="40" placeholder="Ví dụ: Việt Nam"></label><label>Sở thích<input id="interests" maxlength="100" placeholder="Âm nhạc, du lịch, game..."></label><button class="primary" type="submit">Lưu hồ sơ</button></form>
+        <button id="logoutButton" class="secondary full">Đăng xuất</button>
+      </section>
+      <section id="view-messages" class="view hidden">
+        <div class="section-head"><div><h3>Tin nhắn</h3><p>Những kết nối của bạn</p></div></div><div id="messagesList" class="notice">Bạn chưa có cuộc trò chuyện nào.</div>
+      </section>
+      <div class="bottom-note">LUMIO · Connect with kindness ✦</div>
+    </section>
+  </main>
+
+  <div id="authModal" class="modal hidden"><div class="modal-card"><button class="close" id="closeModal">×</button><div class="brand modal-brand"><span class="brandmark">∞</span><span>LUMIO</span></div><h2 id="authTitle">Chào mừng đến LUMIO</h2><p id="authHint">Đăng ký để tạo hồ sơ và bắt đầu kết nối.</p><form id="authForm"><label>Email<input id="email" type="email" autocomplete="email" required placeholder="you@example.com"></label><label>Mật khẩu<input id="password" type="password" minlength="6" autocomplete="current-password" required placeholder="Ít nhất 6 ký tự"></label><button id="authSubmit" class="primary full" type="submit">Tạo tài khoản</button></form><button id="switchAuth" class="text-button">Đã có tài khoản? Đăng nhập</button><p id="authMessage" class="form-message"></p></div></div>
+  <div id="toast" class="toast hidden"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script><script src="app.js"></script>
+</body></html>

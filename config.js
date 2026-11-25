@@ -1,6 +1,9 @@
-// Dán thông tin dự án Supabase của bạn vào đây để bật tài khoản và dữ liệu dùng chung.
-// Không bao giờ đặt service_role key ở ứng dụng trình duyệt. Chỉ dùng anon/publishable key.
+
+// Thông tin kết nối Supabase của LUMIO
+// Chỉ sử dụng Publishable Key, không sử dụng Secret Key.
+
 window.LUMIO_CONFIG = {
-  SUPABASE_URL: "",
-  SUPABASE_ANON_KEY: ""
+  SUPABASE_URL: "https://gyqdwqdkuybhobcinhs.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_NGapgtlCrFZEkCtwnStMyw_Wq2YVX9g"
 };
+

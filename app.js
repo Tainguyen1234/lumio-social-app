@@ -20,7 +20,7 @@ const cfg = window.LUMIO_CONFIG || {};
 const hasBackend = !!(cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY && window.supabase);
 const db = hasBackend ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY) : null;
 let user = null, isLogin = false, demo = false, currentMood = "", profile = null, activeChat = null, messageChannel = null, chatRefreshTimer = null, inboxChannel = null, profileChannel = null, presenceChannel = null, presenceHeartbeat = null;
-let onlineUserIds = new Set(), allPeople = [], peopleFilter = "recommended", peopleSearch = "", feedChannel = null, feedLoading = false, notificationChannel = null, activeRoom = null, roomChannel = null;
+let onlineUserIds = new Set(), allPeople = [], peopleFilter = "recommended", peopleSearch = "", feedChannel = null, feedLoading = false, notificationChannel = null, activeRoom = null, roomChannel = null, typingTimer = null, remoteTypingTimer = null, typingIsOn = false;
 const demoPeople = [
  {id:"demo-1",name:"Mia",age:20,country:"Việt Nam",mood:"Vui vẻ",bio:"Âm nhạc, du lịch và những cuộc trò chuyện thú vị.",initial:"M",color:"pink"},
  {id:"demo-2",name:"Alex",age:23,country:"Singapore",mood:"Khám phá",bio:"Thích game indie, cà phê và khám phá văn hóa.",initial:"A",color:"blue"},
@@ -420,9 +420,19 @@ async function openChat(otherId,name){
  $("chatMessages").textContent="Đang tải tin nhắn...";
  await loadChatMessages();
  if(messageChannel)db.removeChannel(messageChannel);
- messageChannel=db.channel("lumio-chat-"+user.id).on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},payload=>{
-  const m=payload.new;if(activeChat&&((m.sender_id===user.id&&m.receiver_id===activeChat.id)||(m.sender_id===activeChat.id&&m.receiver_id===user.id)))loadChatMessages();
- }).subscribe();
+ const pairKey=[user.id,otherId].sort().join("-");
+ $("chatTypingIndicator").classList.add("hidden");
+ messageChannel=db.channel("lumio-chat-"+pairKey)
+  .on("broadcast",{event:"typing"},payload=>{
+   if(!activeChat||activeChat.id!==otherId||payload.payload?.sender_id===user.id)return;
+   const indicator=$("chatTypingIndicator");
+   indicator.classList.toggle("hidden",!payload.payload?.typing);
+   if(remoteTypingTimer)clearTimeout(remoteTypingTimer);
+   if(payload.payload?.typing)remoteTypingTimer=setTimeout(()=>indicator.classList.add("hidden"),2200);
+  })
+  .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},payload=>{
+   const m=payload.new;if(activeChat&&((m.sender_id===user.id&&m.receiver_id===activeChat.id)||(m.sender_id===activeChat.id&&m.receiver_id===user.id)))loadChatMessages();
+  }).subscribe();
  // Dự phòng khi Realtime trên Safari/iPhone bị trễ hoặc mất kết nối.
  if(chatRefreshTimer)clearInterval(chatRefreshTimer);
  chatRefreshTimer=setInterval(()=>{if(activeChat&&!document.hidden)loadChatMessages()},3000);
@@ -451,7 +461,7 @@ async function sendChatMessage(e){
  const {error}=await db.from("messages").insert({sender_id:user.id,receiver_id:activeChat.id,body});
  $("sendChat").disabled=false;
  if(error){toast("Chưa gửi được tin nhắn: "+error.message);return}
- input.value="";await loadChatMessages();
+ input.value="";if(typingTimer)clearTimeout(typingTimer);typingIsOn=false;if(messageChannel)messageChannel.send({type:"broadcast",event:"typing",payload:{sender_id:user.id,typing:false}});await loadChatMessages();
 }
 
 
@@ -588,7 +598,16 @@ $("refreshRooms").onclick=loadRooms;
 $("leaveRoomChat").onclick=async()=>{if(roomChannel){await db.removeChannel(roomChannel);roomChannel=null}activeRoom=null;$("view-rooms").classList.remove("room-chat-active");$("app").classList.remove("room-focus-active");loadRooms()};
 $("roomChatForm").onsubmit=sendRoomMessage;
 
-$("closeChat").onclick=()=>{$("chatPanel").classList.add("hidden");$("messagesList").classList.remove("hidden");activeChat=null;if(chatRefreshTimer){clearInterval(chatRefreshTimer);chatRefreshTimer=null}if(messageChannel){db.removeChannel(messageChannel);messageChannel=null}};
+$("closeChat").onclick=()=>{if(typingTimer)clearTimeout(typingTimer);if(remoteTypingTimer)clearTimeout(remoteTypingTimer);typingIsOn=false;$("chatTypingIndicator").classList.add("hidden");if(messageChannel){db.removeChannel(messageChannel);messageChannel=null}$("chatPanel").classList.add("hidden");$("messagesList").classList.remove("hidden");activeChat=null;if(chatRefreshTimer){clearInterval(chatRefreshTimer);chatRefreshTimer=null}if(messageChannel){db.removeChannel(messageChannel);messageChannel=null}};
+$("chatInput").addEventListener("input",()=>{
+ if(!activeChat||!messageChannel)return;
+ if($("chatInput").value.trim()&&!typingIsOn){typingIsOn=true;messageChannel.send({type:"broadcast",event:"typing",payload:{sender_id:user.id,typing:true}})}
+ if(typingTimer)clearTimeout(typingTimer);
+ typingTimer=setTimeout(()=>{
+  if(messageChannel&&typingIsOn)messageChannel.send({type:"broadcast",event:"typing",payload:{sender_id:user.id,typing:false}});
+  typingIsOn=false;
+ },1400);
+});
 $("chatForm").onsubmit=sendChatMessage;
 $("startButton").onclick=()=>openAuth(false);
 $("demoButton").onclick=()=>{demo=true;user=null;showApp();toast("Bạn đang trải nghiệm chế độ demo")};

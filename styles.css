@@ -2,3 +2,43 @@
 @media(max-width:700px){.topbar{padding:0 16px}.tagline{display:none}.welcome{margin:16px 14px 35px;min-height:620px;padding:38px 25px;justify-content:flex-start}.orb-wrap{top:auto;bottom:20px;right:calc(50% - 110px);width:220px;height:220px}.orb{width:150px;height:150px}.orb span{font-size:85px}.welcome p{font-size:13px}.welcome-actions{display:grid}.app{padding:0 14px}.people{grid-template-columns:1fr}.person p{min-height:0}.tabs{gap:3px}.tab{min-width:58px;padding:9px 3px}.tab span{font-size:9px}.hello h2{font-size:23px}.mood-grid{gap:9px}.mood{padding:15px}.view{padding-top:23px}}
 
 .match-list{display:grid;gap:10px}.match-row{width:100%;display:flex;align-items:center;gap:12px;padding:13px;background:#ffffff0a;border:1px solid var(--line);border-radius:15px;text-align:left}.match-avatar{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#8c50f5,#d35bcf);display:grid;place-items:center;font-weight:800}.match-label{display:grid;gap:3px;flex:1}.match-label b{font-size:13px}.match-label small{font-size:10px;color:var(--muted)}.chat-panel{margin-top:16px;padding:14px;border:1px solid #bd8aff55;border-radius:18px;background:#ffffff08}.chat-head{display:flex;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--line)}.chat-head strong{font-size:14px}.chat-messages{height:300px;overflow:auto;display:flex;flex-direction:column;gap:9px;padding:14px 0}.chat-bubble{max-width:82%;padding:10px 13px;border-radius:14px;font-size:12px;line-height:1.5;overflow-wrap:anywhere}.chat-bubble.mine{align-self:flex-end;background:linear-gradient(120deg,#8c50f5,#b94fc9)}.chat-bubble.theirs{align-self:flex-start;background:#ffffff16;border:1px solid var(--line)}.chat-form{display:flex;gap:8px}.chat-form input{min-width:0;flex:1;background:#ffffff0b;border:1px solid #ffffff24;color:white;border-radius:12px;padding:12px;font:inherit}.chat-form button{padding:10px 16px}
+
+
+/* LUMIO Messages — refreshed premium chat experience */
+#view-messages .section-head{margin-bottom:22px}
+#view-messages .section-head h3{font-size:clamp(23px,4vw,29px);letter-spacing:-.8px}
+#view-messages .section-head p{font-size:12px}
+#messagesList.match-list{display:grid;gap:10px;padding:14px;border:1px solid #ffffff18;border-radius:24px;background:linear-gradient(145deg,#ffffff0d,#ffffff04);box-shadow:0 18px 50px #0003}
+#messagesList .match-row{position:relative;min-height:76px;padding:13px 15px;border:1px solid #ffffff0d;border-radius:18px;background:linear-gradient(110deg,#ffffff0b,#ffffff04);transition:transform .18s ease,border-color .18s ease,background .18s ease}
+#messagesList .match-row:active{transform:scale(.985)}
+#messagesList .match-avatar{width:50px;height:50px;flex:0 0 50px;border-radius:17px;font-size:17px;background:linear-gradient(145deg,#a66bff,#ed72ce);box-shadow:0 7px 22px #a65bff44}
+#messagesList .match-label{gap:5px}
+#messagesList .match-label b{font-size:13px;font-weight:800;letter-spacing:.1px}
+#messagesList .match-label small{font-size:10px;color:#a99bbd}
+#messagesList .match-row>span:last-child{width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:#ffffff0c;color:#d9b5ff;font-size:22px}
+#messagesList.notice{padding:22px;border-radius:22px;line-height:1.8}
+#view-messages .chat-panel{margin-top:0;padding:0;overflow:hidden;border:1px solid #ffffff1c;border-radius:25px;background:linear-gradient(160deg,#1d1430f5,#100c1df7);box-shadow:0 24px 70px #0005}
+#view-messages .chat-head{position:relative;min-height:76px;padding:13px 16px;border-bottom:1px solid #ffffff12;background:linear-gradient(100deg,#a66bff1c,#f16bd511);gap:13px}
+#view-messages .chat-head #closeChat{width:42px;height:42px;padding:0!important;display:grid;place-items:center;border:1px solid #ffffff18;border-radius:14px;background:#ffffff0c;font-size:0!important}
+#view-messages .chat-head #closeChat:after{content:"‹";font-size:27px;line-height:1;color:#eadcff}
+#view-messages .chat-head strong{font-size:14px;font-weight:800;letter-spacing:.1px}
+#view-messages .chat-head strong:after{content:"Cuộc trò chuyện riêng tư";display:block;margin-top:4px;color:#a99bbd;font-size:10px;font-weight:500;letter-spacing:0}
+#view-messages .chat-messages{height:min(54vh,470px);min-height:300px;padding:20px 15px;gap:13px;background:radial-gradient(ellipse at 50% 0,#a66bff0b,transparent 60%)}
+#view-messages .chat-bubble{position:relative;max-width:min(82%,340px);padding:12px 15px;border-radius:19px;font-size:13px;line-height:1.55;box-shadow:0 5px 15px #0002}
+#view-messages .chat-bubble.mine{align-self:flex-end;border:1px solid #e5a4ff35;border-bottom-right-radius:6px;background:linear-gradient(135deg,#8d58f5,#c653c9);color:#fff}
+#view-messages .chat-bubble.theirs{align-self:flex-start;border:1px solid #ffffff12;border-bottom-left-radius:6px;background:linear-gradient(135deg,#ffffff15,#ffffff0a);color:#f4edff}
+#view-messages .chat-form{display:flex;align-items:center;gap:9px;padding:13px 14px calc(13px + env(safe-area-inset-bottom));border-top:1px solid #ffffff12;background:#100b1ce8}
+#view-messages .chat-form input{height:48px;min-width:0;padding:0 17px;border:1px solid #ffffff17;border-radius:25px;background:#ffffff0b;color:#fff;font-size:13px;outline:none}
+#view-messages .chat-form input:focus{border-color:#b77aff88;box-shadow:0 0 0 3px #a66bff18}
+#view-messages .chat-form input::placeholder{color:#9385a8}
+#view-messages .chat-form button{width:48px;height:48px;flex:0 0 48px;padding:0;border-radius:17px;font-size:0;display:grid;place-items:center}
+#view-messages .chat-form button:after{content:"➤";font-size:19px;transform:translateX(1px)}
+#view-messages .chat-form button:disabled{opacity:.55}
+@media(max-width:700px){
+ #view-messages .view{padding-top:19px}
+ #messagesList.match-list{padding:10px;border-radius:21px}
+ #messagesList .match-row{min-height:72px;padding:11px}
+ #view-messages .chat-panel{margin-left:-2px;margin-right:-2px;border-radius:22px}
+ #view-messages .chat-messages{height:calc(100dvh - 330px);min-height:260px;max-height:490px;padding:17px 12px}
+ #view-messages .chat-form{padding-left:11px;padding-right:11px}
+}

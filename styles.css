@@ -333,3 +333,11 @@ html[data-theme="dark"] .theme-toggle{color:#eee5ff;background:#ffffff10;border-
 .tab .unread-count{position:absolute;top:2px;right:calc(50% - 25px);min-width:17px;height:17px;padding:0 4px;display:inline-flex;align-items:center;justify-content:center;border-radius:20px;background:#ef5da8;color:#fff;font-size:10px;font-style:normal;font-weight:900;line-height:1;box-shadow:0 2px 8px #d94c9b55;border:2px solid #f7f6fc}
 .tab .unread-count.hidden{display:none!important}
 html[data-theme="dark"] .tab .unread-count{border-color:#171027}
+
+
+/* LUMIO member presence status */
+.presence-label{display:flex;align-items:center;gap:6px;margin-top:5px;font-size:10px!important;font-weight:700;letter-spacing:.05px}
+.presence-label:before{content:"";width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#a6a0ae}
+.presence-label.is-online{color:#159b68!important}
+.presence-label.is-online:before{background:#20c887;box-shadow:0 0 0 3px #20c88722}
+.presence-label.is-offline{color:var(--muted)!important}

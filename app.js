@@ -17,9 +17,46 @@ function showWelcome(){ $("app").classList.add("hidden");$("welcome").classList.
 function openAuth(login=false){isLogin=login;$("authTitle").textContent=login?"Đăng nhập LUMIO":"Tạo tài khoản LUMIO";$("authHint").textContent=login?"Chào mừng bạn quay trở lại.":"Đăng ký để tạo hồ sơ và bắt đầu kết nối."; $("authSubmit").textContent=login?"Đăng nhập":"Tạo tài khoản";$("switchAuth").textContent=login?"Chưa có tài khoản? Đăng ký":"Đã có tài khoản? Đăng nhập";$("authMessage").textContent="";$("authModal").classList.remove("hidden")}
 function closeAuth(){$("authModal").classList.add("hidden")}
 function loadProfile(){let p=JSON.parse(localStorage.getItem("lumio_profile")||"{}");profile=p;$("displayName").value=p.name||user?.email?.split("@")[0]||"Lumio Member";$("bio").value=p.bio||"";$("country").value=p.country||"Việt Nam";$("interests").value=p.interests||"";$("greeting").textContent="Xin chào, "+(p.name||"bạn")+" ✨";$("myAvatar").textContent=(p.name||"L").slice(0,1).toUpperCase()}
-function renderPeople(){const list=$("people");list.innerHTML="";demoPeople.forEach(p=>{const el=document.createElement("article");el.className="person";el.innerHTML=`<div class="person-top"><div class="person-avatar">${p.initial}</div><div><h4>${p.name}, ${p.age}</h4><small>${p.country} · ${p.mood}</small></div></div><p>${p.bio}</p><div class="person-actions"><button class="pass">Bỏ qua</button><button class="like">♥ Kết nối</button></div>`;el.querySelector(".pass").onclick=()=>{el.remove();toast("Đã ẩn gợi ý này")};el.querySelector(".like").onclick=()=>{if(!user&&!demo){openAuth();toast("Đăng nhập để lưu kết nối");return}toast("Đã gửi lời mời kết nối!");el.querySelector(".like").textContent="✓ Đã gửi";el.querySelector(".like").disabled=true};list.appendChild(el)})}
+async function renderPeople(){
+ const list=$("people"); list.innerHTML="";
+ if(!db || !user){
+  demoPeople.forEach(p=>renderPersonCard(p,list,true));
+  return;
+ }
+ list.innerHTML='<p class="notice">Đang tìm những người dùng LUMIO...</p>';
+ const {data,error}=await db.from("profiles").select("id,display_name,bio,country,interests,mood,created_at").neq("id",user.id).order("created_at",{ascending:false}).limit(60);
+ if(error){list.innerHTML="";toast("Không tải được danh sách: "+error.message);return}
+ const people=(data||[]).sort(()=>Math.random()-.5);
+ list.innerHTML="";
+ if(!people.length){list.innerHTML='<p class="notice">Chưa có hồ sơ thành viên khác. Hãy mời bạn bè tham gia LUMIO nhé!</p>';return}
+ people.forEach(p=>renderPersonCard({id:p.id,name:p.display_name||"Lumio Member",country:p.country||"Chưa cập nhật quốc gia",mood:p.mood||"Chưa cập nhật tâm trạng",bio:p.bio||p.interests||"Đang khám phá LUMIO",initial:(p.display_name||"L").slice(0,1).toUpperCase()},list,false));
+}
+function renderPersonCard(p,list,isDemo){
+ const el=document.createElement("article");el.className="person";
+ const top=document.createElement("div");top.className="person-top";
+ const avatar=document.createElement("div");avatar.className="person-avatar";avatar.textContent=p.initial||"L";
+ const info=document.createElement("div");const name=document.createElement("h4");name.textContent=p.name;const meta=document.createElement("small");meta.textContent=p.country+" · "+p.mood;info.append(name,meta);top.append(avatar,info);
+ const bio=document.createElement("p");bio.textContent=p.bio;
+ const actions=document.createElement("div");actions.className="person-actions";
+ const pass=document.createElement("button");pass.className="pass";pass.textContent="Bỏ qua";pass.onclick=()=>el.remove();
+ const like=document.createElement("button");like.className="like";like.textContent="♥ Kết nối";
+ like.onclick=async()=>{
+  if(isDemo){toast("Đây là hồ sơ demo; đăng nhập và chờ thành viên thật để kết nối.");return}
+  like.disabled=true;
+  const {error:insertError}=await db.from("likes").insert({from_user:user.id,to_user:p.id});
+  if(insertError){
+   if(insertError.code==="23505")toast("Bạn đã gửi lời thích cho người này rồi.");
+   else toast("Chưa gửi được lời thích: "+insertError.message);
+   like.disabled=false;return;
+  }
+  const {data:backLike}=await db.from("likes").select("id").eq("from_user",p.id).eq("to_user",user.id).maybeSingle();
+  if(backLike){like.textContent="✓ Đã tương hợp";toast("Hai bạn đã thích nhau! Đây là một kết nối mới.");}
+  else{like.textContent="✓ Đã gửi";toast("Đã gửi lời thích! Chờ người ấy phản hồi nhé.");}
+ };
+ actions.append(pass,like);el.append(top,bio,actions);list.appendChild(el);
+}
 function switchTab(tab){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));$("view-"+tab).classList.remove("hidden")}
-document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));\n$("refreshPeople").onclick=()=>renderPeople();
 $("startButton").onclick=()=>openAuth(false);
 $("demoButton").onclick=()=>{demo=true;user=null;showApp();toast("Bạn đang trải nghiệm chế độ demo")};
 $("authButton").onclick=()=>user?switchTab("profile"):openAuth(true);

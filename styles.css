@@ -810,3 +810,16 @@ html[data-theme="dark"] #view-rooms .room-chat-panel .chat-form input{background
   #view-rooms.room-chat-active .room-chat-head{min-height:42px;padding-bottom:8px}
   #view-rooms.room-chat-active .room-chat-members{min-height:42px;padding:6px 0}
 }
+
+
+/* Vibe Rooms quick emoji composer */
+.room-emoji-bar{display:flex;align-items:center;gap:7px;padding:8px 2px 3px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}
+.room-emoji-bar::-webkit-scrollbar{display:none}
+.room-emoji-bar button{flex:0 0 34px;width:34px;height:32px;display:grid;place-items:center;border:1px solid var(--line);border-radius:11px;background:#ffffff0b;font-size:18px;line-height:1;transition:transform .15s,background .15s}
+.room-emoji-bar button:active{transform:scale(.9);background:#a25cff30}
+html[data-theme="dark"] .room-emoji-bar button{background:#ffffff0b;border-color:#ffffff20}
+@media(max-width:700px){
+ #view-rooms.room-chat-active .room-emoji-bar{flex:0 0 auto;gap:6px;padding:7px 1px 2px}
+ #view-rooms.room-chat-active .room-emoji-bar button{flex-basis:32px;width:32px;height:30px}
+ #view-rooms.room-chat-active .room-chat-panel .chat-form{padding-top:5px!important}
+}

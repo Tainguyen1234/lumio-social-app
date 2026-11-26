@@ -7,7 +7,7 @@
   <title>LUMIO — Connect • Play • Vibe</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=notifications-1">
+  <link rel="stylesheet" href="styles.css?v=bottom-nav-1">
   <script>try{document.documentElement.dataset.theme=localStorage.getItem("lumio-theme")==="dark"?"dark":"light"}catch(e){document.documentElement.dataset.theme="light"}</script>
 </head>
 <body>
@@ -24,13 +24,18 @@
 
     <section id="app" class="app hidden">
       <div class="hello"><div><div class="eyebrow">LUMIO COMMUNITY</div><h2 id="greeting">Xin chào ✨</h2><p>Hôm nay bạn muốn kết nối thế nào?</p></div><div class="avatar" id="myAvatar">L</div></div>
-      <nav class="tabs">
-        <button class="tab active" data-tab="feed">▤<span>Bảng tin</span></button><button class="tab" data-tab="discover">⌕<span>Khám phá</span></button>
-        <button class="tab" data-tab="mood">✧<span>Tâm trạng</span></button>
-        <button class="tab" data-tab="play">◈<span>Trò chơi</span></button>
-        <button class="tab" data-tab="rooms">◉<span>Phòng</span></button>
-        <button class="tab" data-tab="notifications">♧<span>Thông báo</span><i id="notificationUnreadCount" class="unread-count hidden" aria-live="polite"></i></button>
-        <button class="tab" data-tab="profile">♙<span>Cá nhân</span></button><button id="openMessages" class="tab" data-tab="messages" aria-label="Tin nhắn">♡<span>Tin nhắn</span><i id="messageUnreadCount" class="unread-count hidden" aria-live="polite"></i></button>
+      <nav class="tabs bottom-nav" aria-label="Điều hướng chính">
+        <button class="tab active" data-tab="feed" aria-label="Bảng tin"><span class="nav-icon">▤</span><span>Bảng tin</span></button>
+        <button class="tab" data-tab="discover" aria-label="Khám phá"><span class="nav-icon">⌕</span><span>Khám phá</span></button>
+        <button class="tab" data-tab="play" aria-label="Trò chơi"><span class="nav-icon">◈</span><span>Trò chơi</span></button>
+        <button id="openMessages" class="tab" data-tab="messages" aria-label="Tin nhắn"><span class="nav-icon">♡</span><span>Tin nhắn</span><i id="messageUnreadCount" class="unread-count hidden" aria-live="polite"></i></button>
+        <button id="moreNavButton" class="tab more-nav-button" type="button" aria-expanded="false" aria-controls="moreNavMenu"><span class="nav-icon">•••</span><span>Thêm</span><i id="moreUnreadCount" class="unread-count hidden" aria-live="polite"></i></button>
+        <div id="moreNavMenu" class="more-nav-menu hidden" aria-label="Các chức năng khác">
+          <button class="more-nav-item" data-tab="mood"><span>✧</span>Tâm trạng</button>
+          <button class="more-nav-item" data-tab="rooms"><span>◉</span>Phòng</button>
+          <button class="more-nav-item" data-tab="notifications"><span>♧</span>Thông báo <i id="notificationUnreadCount" class="unread-count hidden" aria-live="polite"></i></button>
+          <button class="more-nav-item" data-tab="profile"><span>♙</span>Cá nhân</button>
+        </div>
       </nav>
       <section id="view-feed" class="view">
         <div class="section-head"><div><h3>Bảng tin cộng đồng</h3><p>Chia sẻ khoảnh khắc và kết nối cùng LUMIO</p></div><button id="refreshFeed" class="secondary small" type="button">↻ Làm mới</button></div>
@@ -84,5 +89,5 @@
 <button id="resendConfirmation" class="secondary full hidden" type="button">Gửi lại email xác nhận</button></form><button id="switchAuth" class="text-button">Đã có tài khoản? Đăng nhập</button><p id="authMessage" class="form-message"></p></div></div>
   <div id="toast" class="toast hidden"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2'"></script>
-  <script src="config.js?v=notifications-1"></script><script src="app.js?v=notifications-1"></script>
+  <script src="config.js?v=notifications-1"></script><script src="app.js?v=bottom-nav-1"></script>
 </body></html>

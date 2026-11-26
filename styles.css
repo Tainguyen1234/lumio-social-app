@@ -704,3 +704,62 @@ html[data-theme="dark"] #view-rooms .room-chat-panel .chat-form input{background
   #view-rooms .room-message-content p{font-size:12px}
   #view-rooms .room-chat-panel .chat-form{padding-top:10px}
 }
+
+
+/* LUMIO mobile room focus mode: full-height chat, anchored composer */
+@media(max-width:700px){
+  #app:has(#view-rooms .room-chat-panel:not(.hidden)) .hello{display:none!important}
+  #view-rooms:has(.room-chat-panel:not(.hidden)){
+    position:fixed!important;z-index:40;
+    top:calc(68px + env(safe-area-inset-top) + 4px);
+    left:10px;right:10px;
+    bottom:calc(83px + env(safe-area-inset-bottom));
+    display:flex!important;flex-direction:column;
+    min-height:0;overflow:hidden;
+    padding:0!important;margin:0!important;
+    border-radius:23px;
+  }
+  #view-rooms:has(.room-chat-panel:not(.hidden))>.section-head{display:none!important}
+  #view-rooms:has(.room-chat-panel:not(.hidden)) #roomList{display:none!important}
+  #view-rooms .room-chat-panel:not(.hidden){
+    display:flex!important;flex:1 1 auto;flex-direction:column;
+    min-height:0;height:100%;max-height:100%;
+    margin:0;padding:12px;border-radius:23px;
+    overflow:hidden;
+    background:linear-gradient(160deg,#fffefa,#f7f3ff);
+    box-shadow:0 16px 48px #21133324;
+  }
+  #view-rooms .room-chat-head{flex:0 0 auto;min-height:48px;padding:2px 0 11px}
+  #view-rooms .room-chat-members{flex:0 0 auto;min-height:48px;padding:8px 0}
+  #view-rooms .room-chat-messages{
+    flex:1 1 0!important;min-height:0!important;
+    height:auto!important;max-height:none!important;
+    padding:13px 1px;overflow-y:auto;
+    overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  }
+  #view-rooms .room-chat-panel .chat-form{
+    position:relative;flex:0 0 auto;z-index:3;
+    margin:0!important;padding:10px 0 max(2px,env(safe-area-inset-bottom))!important;
+    background:transparent;
+  }
+  #view-rooms .room-chat-panel .chat-form input{
+    height:46px!important;min-height:46px;
+    font-size:13px!important;border-radius:15px;
+  }
+  #view-rooms .room-chat-panel .chat-form button{
+    height:46px!important;min-height:46px;min-width:66px;
+  }
+  html[data-theme="dark"] #view-rooms .room-chat-panel{
+    background:linear-gradient(160deg,#251e34,#171322);
+    box-shadow:0 16px 48px #0008;
+  }
+}
+@media(max-height:720px) and (max-width:700px){
+  #view-rooms:has(.room-chat-panel:not(.hidden)){
+    top:calc(62px + env(safe-area-inset-top));
+    bottom:calc(76px + env(safe-area-inset-bottom));
+  }
+  #view-rooms .room-chat-panel:not(.hidden){padding:9px}
+  #view-rooms .room-chat-head{min-height:42px;padding-bottom:8px}
+  #view-rooms .room-chat-members{min-height:42px;padding:6px 0}
+}

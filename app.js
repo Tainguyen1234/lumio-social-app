@@ -3,7 +3,7 @@ const $ = id => document.getElementById(id);
 const cfg = window.LUMIO_CONFIG || {};
 const hasBackend = !!(cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY && window.supabase);
 const db = hasBackend ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY) : null;
-let user = null, isLogin = false, demo = false, currentMood = "", profile = null, activeChat = null, messageChannel = null;
+let user = null, isLogin = false, demo = false, currentMood = "", profile = null, activeChat = null, messageChannel = null, chatRefreshTimer = null;
 const demoPeople = [
  {id:"demo-1",name:"Mia",age:20,country:"Việt Nam",mood:"Vui vẻ",bio:"Âm nhạc, du lịch và những cuộc trò chuyện thú vị.",initial:"M",color:"pink"},
  {id:"demo-2",name:"Alex",age:23,country:"Singapore",mood:"Khám phá",bio:"Thích game indie, cà phê và khám phá văn hóa.",initial:"A",color:"blue"},
@@ -88,8 +88,11 @@ async function openChat(otherId,name){
  await loadChatMessages();
  if(messageChannel)db.removeChannel(messageChannel);
  messageChannel=db.channel("lumio-chat-"+user.id).on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},payload=>{
-  const m=payload.new;if((m.sender_id===user.id&&m.receiver_id===otherId)||(m.sender_id===otherId&&m.receiver_id===user.id))loadChatMessages();
+  const m=payload.new;if(activeChat&&((m.sender_id===user.id&&m.receiver_id===activeChat.id)||(m.sender_id===activeChat.id&&m.receiver_id===user.id)))loadChatMessages();
  }).subscribe();
+ // Dự phòng khi Realtime trên Safari/iPhone bị trễ hoặc mất kết nối.
+ if(chatRefreshTimer)clearInterval(chatRefreshTimer);
+ chatRefreshTimer=setInterval(()=>{if(activeChat&&!document.hidden)loadChatMessages()},3000);
 }
 async function loadChatMessages(){
  if(!activeChat||!db||!user)return;
@@ -116,7 +119,7 @@ function switchTab(tab){document.querySelectorAll(".tab").forEach(b=>b.classList
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
 $("refreshPeople").onclick=()=>renderPeople();
 $("openMessages").onclick=()=>{switchTab("messages");loadMatches()};
-$("closeChat").onclick=()=>{$("chatPanel").classList.add("hidden");activeChat=null;if(messageChannel){db.removeChannel(messageChannel);messageChannel=null}};
+$("closeChat").onclick=()=>{$("chatPanel").classList.add("hidden");activeChat=null;if(chatRefreshTimer){clearInterval(chatRefreshTimer);chatRefreshTimer=null}if(messageChannel){db.removeChannel(messageChannel);messageChannel=null}};
 $("chatForm").onsubmit=sendChatMessage;
 $("startButton").onclick=()=>openAuth(false);
 $("demoButton").onclick=()=>{demo=true;user=null;showApp();toast("Bạn đang trải nghiệm chế độ demo")};
@@ -131,5 +134,7 @@ $("logoutButton").onclick=async()=>{if(db&&user)await db.auth.signOut();user=nul
 document.querySelectorAll(".mood").forEach(b=>b.onclick=async()=>{document.querySelectorAll(".mood").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");currentMood=b.dataset.mood;$("moodResult").textContent="Tâm trạng của bạn: "+currentMood+". Hãy khám phá những người cùng tần số!";if(user&&db){const {error}=await db.from("profiles").upsert({id:user.id,display_name:profile?.name||"Lumio Member",mood:currentMood});if(error)toast("Chưa đồng bộ được tâm trạng")}else toast("Đã chọn mood: "+currentMood)});
 $("nextQuestion").onclick=()=>{$("question").textContent=questions[++qIndex%questions.length]};
 if(db){db.auth.getSession().then(({data})=>{if(data.session){user=data.session.user;showApp()}});db.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;if(user)showApp()})}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&activeChat)loadChatMessages()});
+window.addEventListener("focus",()=>{if(activeChat)loadChatMessages()});
 if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js").catch(()=>{});
 })();

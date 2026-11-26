@@ -1,5 +1,21 @@
 (() => {
 const $ = id => document.getElementById(id);
+
+function initThemeToggle(){
+ const root=document.documentElement,button=$("themeToggle"),meta=document.querySelector('meta[name="theme-color"]');
+ const apply=theme=>{
+  const chosen=theme==="dark"?"dark":"light";
+  root.dataset.theme=chosen;
+  try{localStorage.setItem("lumio-theme",chosen)}catch(e){}
+  if(meta)meta.setAttribute("content",chosen==="dark"?"#100e19":"#f7f6fc");
+  if(button){button.textContent=chosen==="dark"?"☀ Sáng":"☾ Tối";button.setAttribute("aria-label",chosen==="dark"?"Chuyển sang giao diện sáng":"Chuyển sang giao diện tối");button.setAttribute("aria-pressed",String(chosen==="dark"))}
+ };
+ let saved="light";try{saved=localStorage.getItem("lumio-theme")==="dark"?"dark":"light"}catch(e){}
+ apply(saved);
+ if(button)button.addEventListener("click",()=>apply(root.dataset.theme==="dark"?"light":"dark"));
+}
+initThemeToggle();
+
 const cfg = window.LUMIO_CONFIG || {};
 const hasBackend = !!(cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY && window.supabase);
 const db = hasBackend ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY) : null;

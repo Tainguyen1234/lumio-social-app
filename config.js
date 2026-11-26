@@ -3,7 +3,7 @@
 // Chỉ sử dụng Publishable Key, không sử dụng Secret Key.
 
 window.LUMIO_CONFIG = {
-  SUPABASE_URL: "https://gyqdwqdkuybhobcinhs.supabase.co",
+  SUPABASE_URL: "https://gyqdwqdkuuybhobcinhs.supabase.co",
   SUPABASE_ANON_KEY: "sb_publishable_NGapgtlCrFZEkCtwnStMyw_Wq2YVX9g"
 };
 

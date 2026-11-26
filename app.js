@@ -34,7 +34,15 @@ async function refreshUnreadBadge(){
  const {count,error}=await db.from("messages").select("id",{count:"exact",head:true}).eq("receiver_id",user.id).is("read_at",null);
  if(error)return;
  const tab=document.querySelector('.tab[data-tab="messages"]');
- if(tab)tab.classList.toggle("has-unread",!!count);
+ const badge=$("messageUnreadCount");
+ if(tab){
+  tab.classList.toggle("has-unread",!!count);
+  tab.setAttribute("aria-label",count?("Tin nhắn, "+count+" tin chưa đọc"):"Tin nhắn");
+ }
+ if(badge){
+  badge.textContent=count>99?"99+":String(count||"");
+  badge.classList.toggle("hidden",!count);
+ }
 }
 async function markChatRead(){
  if(!db||!user||!activeChat)return;

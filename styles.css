@@ -902,3 +902,27 @@ html[data-theme="dark"] .chat-typing{color:#c5a2f5}
 html[data-theme="dark"] #view-messages .message-thread{background:linear-gradient(115deg,#ffffff0b,#a66aff0a);border-color:#b995e52a}
 html[data-theme="dark"] #view-messages .message-thread.has-unread{border-color:#a977ed85}
 @media(max-width:380px){#view-messages .message-thread{gap:8px;padding:11px 9px}#view-messages .message-thread .match-avatar{width:41px;height:41px;flex-basis:41px}}
+
+
+/* Public beta feedback experience */
+#view-feedback .beta-pill{padding:6px 10px;border-radius:99px;border:1px solid #a977ed55;background:#a977ed16;color:#bd91f5;font-size:10px;font-weight:900;letter-spacing:1px}
+.feedback-intro{display:flex;align-items:center;gap:14px;margin:8px 0 18px;padding:17px;border:1px solid #a977ed40;border-radius:20px;background:radial-gradient(circle at 10% 20%,#a977ed20,transparent 65%),#ffffff08}
+.feedback-orbit{width:48px;height:48px;flex:0 0 48px;display:grid;place-items:center;border-radius:16px;background:linear-gradient(135deg,#8d55ee,#d05bcf);color:white;font-size:24px;box-shadow:0 0 25px #a45be544}
+.feedback-intro strong{font-size:14px}
+.feedback-intro p{margin:5px 0 0;color:var(--muted);font-size:11px;line-height:1.5}
+.beta-feedback-form{display:grid;gap:15px;padding:17px;border:1px solid var(--line);border-radius:20px;background:#ffffff08}
+.beta-feedback-form>label{display:grid;gap:7px;font-size:12px;font-weight:700}
+.beta-feedback-form input:not([type=radio]),.beta-feedback-form select,.beta-feedback-form textarea{width:100%;min-width:0;padding:12px 13px;border:1px solid var(--line);border-radius:13px;background:#ffffff0b;color:var(--text);font:inherit;font-size:12px;outline:none}
+.beta-feedback-form textarea{resize:vertical;min-height:108px;line-height:1.55}
+.beta-feedback-form select option{color:#171322}
+.feedback-rating{margin:0;padding:0;border:0}
+.feedback-rating legend{margin-bottom:9px;font-size:12px;font-weight:700}
+.rating-options{display:flex;gap:9px}
+.rating-options label{position:relative;cursor:pointer}
+.rating-options input{position:absolute;opacity:0;pointer-events:none}
+.rating-options span{width:42px;height:40px;display:grid;place-items:center;border:1px solid var(--line);border-radius:12px;background:#ffffff09;font-size:13px;font-weight:800}
+.rating-options input:checked+span{border-color:#b37bf2;background:linear-gradient(135deg,#8d55ee55,#d05bcf44);box-shadow:0 0 15px #a45be533;color:#d5b5ff}
+.feedback-rating>small,.feedback-privacy{color:var(--muted);font-size:10px;line-height:1.5}
+.feedback-status{margin:0;min-height:18px;color:#bd91f5;font-size:12px;font-weight:700;text-align:center}
+html[data-theme="dark"] .beta-feedback-form input,html[data-theme="dark"] .beta-feedback-form select,html[data-theme="dark"] .beta-feedback-form textarea{background:#ffffff0a}
+@media(max-width:380px){.beta-feedback-form{padding:13px}.rating-options{gap:6px}.rating-options span{width:38px;height:38px}}

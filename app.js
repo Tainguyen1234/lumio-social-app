@@ -402,13 +402,33 @@ async function loadMatches(){
  const ids=matches.map(m=>m.user1===user.id?m.user2:m.user1);
  const {data:profiles,error:profileError}=await db.from("profiles").select("id,display_name,country,avatar_url,last_seen_at").in("id",ids);
  if(profileError){root.textContent="Không tải được hồ sơ kết nối: "+profileError.message;return}
+ const {data:recentMessages,messageError}=await db.from("messages").select("id,sender_id,receiver_id,body,created_at,read_at").or("sender_id.eq."+user.id+",receiver_id.eq."+user.id).order("created_at",{ascending:false}).limit(500);
+ const latestByUser=new Map(),unreadByUser=new Map();
+ (recentMessages||[]).forEach(msg=>{
+  const other=msg.sender_id===user.id?msg.receiver_id:msg.sender_id;
+  if(!latestByUser.has(other))latestByUser.set(other,msg);
+  if(msg.receiver_id===user.id&&!msg.read_at)unreadByUser.set(other,(unreadByUser.get(other)||0)+1);
+ });
  root.innerHTML="";
+ matches.sort((a,b)=>{
+  const aId=a.user1===user.id?a.user2:a.user1,bId=b.user1===user.id?b.user2:b.user1;
+  const aTime=latestByUser.get(aId)?.created_at||a.created_at,bTime=latestByUser.get(bId)?.created_at||b.created_at;
+  return new Date(bTime)-new Date(aTime);
+ });
  matches.forEach(m=>{
-  const other=m.user1===user.id?m.user2:m.user1, p=(profiles||[]).find(x=>x.id===other)||{};
-  const b=document.createElement("button");b.className="match-row";b.type="button";
+  const other=m.user1===user.id?m.user2:m.user1, p=(profiles||[]).find(x=>x.id===other)||{},last=latestByUser.get(other),unread=unreadByUser.get(other)||0;
+  const b=document.createElement("button");b.className="match-row message-thread"+(unread?" has-unread":"");b.type="button";
   const av=document.createElement("span");av.className="match-avatar";if(p.avatar_url){const img=document.createElement("img");img.src=p.avatar_url;img.alt="Ảnh đại diện";av.append(img)}else av.textContent=(p.display_name||"L").slice(0,1).toUpperCase();
-  const label=document.createElement("span");label.className="match-label";const strong=document.createElement("b");strong.textContent=p.display_name||"Lumio Member";const small=document.createElement("small");small.textContent=p.country||"Thành viên LUMIO";label.append(strong,small);appendPresenceLabel(label,other,p.last_seen_at);
-  const arrow=document.createElement("span");arrow.textContent="›";b.append(av,label,arrow);b.onclick=()=>openChat(other,p.display_name||"Lumio Member");root.append(b);
+  const label=document.createElement("span");label.className="match-label";
+  const strong=document.createElement("b");strong.textContent=p.display_name||"Lumio Member";
+  const preview=document.createElement("small");preview.className="thread-preview";
+  preview.textContent=last?(last.sender_id===user.id?"Bạn: ":"")+last.body:"Bắt đầu cuộc trò chuyện";
+  label.append(strong,preview);appendPresenceLabel(label,other,p.last_seen_at);
+  const meta=document.createElement("span");meta.className="thread-meta";
+  const time=document.createElement("small");time.className="thread-time";time.textContent=last?formatMessageTime(last.created_at):"Mới";
+  meta.append(time);
+  if(unread){const badge=document.createElement("span");badge.className="thread-unread";badge.textContent=unread>99?"99+":String(unread);meta.append(badge)}
+  b.append(av,label,meta);b.onclick=()=>openChat(other,p.display_name||"Lumio Member");root.append(b);
  });
 }
 async function openChat(otherId,name){

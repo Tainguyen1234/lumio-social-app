@@ -53,3 +53,13 @@
 .chat-message.mine .message-meta{color:#c8a9eb}
 .tab.has-unread{position:relative}
 .tab.has-unread:after{content:"";position:absolute;top:7px;right:calc(50% - 17px);width:8px;height:8px;border-radius:50%;background:#ff6fba;box-shadow:0 0 0 3px #ff6fba22,0 0 12px #ff6fba}
+
+/* LUMIO profile photo */
+.avatar-editor{display:flex;align-items:center;gap:16px;padding:16px;margin:4px 0 18px;border:1px solid #ffffff18;border-radius:20px;background:#ffffff08}
+.avatar-preview{width:76px;height:76px;flex:0 0 76px;border-radius:24px;overflow:hidden;font-size:25px}
+.avatar-editor-actions{display:flex;flex-direction:column;align-items:flex-start;gap:7px}
+.avatar-editor-actions strong{font-size:13px}
+.avatar-editor-actions small{font-size:10px;color:var(--muted)}
+.avatar-upload-label{display:inline-flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:12px;font-size:11px;cursor:pointer}
+.person-avatar img,.match-avatar img,.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.person-avatar,.match-avatar{overflow:hidden}

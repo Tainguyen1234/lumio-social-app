@@ -507,3 +507,34 @@ html[data-theme="dark"] .more-nav-item.active{background:#392b50;color:#d9c5ff}
 
 /* Six destinations in the LUMIO bottom bar */
 .bottom-nav{grid-template-columns:repeat(6,minmax(0,1fr))!important}
+
+
+/* LUMIO live group chat rooms */
+.room-chat-panel{margin-top:16px;padding:14px;border:1px solid #bd8aff55;border-radius:20px;background:#ffffff09}
+.room-chat-head{display:flex;align-items:center;gap:12px;padding-bottom:13px;border-bottom:1px solid var(--line)}
+.room-chat-head>div{display:grid;gap:4px}
+.room-chat-head b{font-size:14px}
+.room-chat-head small{font-size:10px;color:var(--muted)}
+.room-chat-messages{height:min(52vh,440px);min-height:240px;overflow:auto;display:flex;flex-direction:column;gap:10px;padding:14px 2px}
+.room-message{max-width:84%;padding:10px 13px;border-radius:15px;background:#ffffff12;border:1px solid var(--line);overflow-wrap:anywhere}
+.room-message.mine{align-self:flex-end;background:linear-gradient(120deg,#8c50f5,#b94fc9);border-color:transparent}
+.room-message.theirs{align-self:flex-start}
+.room-message b,.room-message p,.room-message small{display:block;margin:0}
+.room-message b{font-size:10px;color:#d6baff;margin-bottom:5px}
+.room-message p{font-size:13px;line-height:1.5;white-space:pre-wrap}
+.room-message small{font-size:9px;color:var(--muted);margin-top:5px;text-align:right}
+.room-message.mine b,.room-message.mine small{color:#f1dcff}
+.room-chat-panel .chat-form{margin-top:5px}
+.room-chat-panel .chat-form input{min-width:0}
+html[data-theme="dark"] .room-chat-panel{background:#211b2d;border-color:#ffffff20}
+html[data-theme="dark"] .room-message.theirs{background:#ffffff10;border-color:#ffffff18}
+.room-list .room{gap:12px}
+.room-list .room>div:nth-child(2){flex:1;min-width:0}
+.room-list .room>span{white-space:nowrap}
+.room-list .room button{white-space:nowrap}
+@media(max-width:700px){
+ .room-list .room{flex-wrap:wrap}
+ .room-list .room>div:nth-child(2){flex:1}
+ .room-list .room>span{margin-left:56px}
+ .room-list .room button{margin-left:auto}
+}

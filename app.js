@@ -103,10 +103,9 @@ async function refreshNotificationBadge(){
  if(!db||!user)return;
  const {count,error}=await db.from("notifications").select("id",{count:"exact",head:true}).eq("recipient_id",user.id).is("read_at",null);
  if(error)return;
- const tab=document.querySelector('.more-nav-item[data-tab="notifications"]'),badge=$("notificationUnreadCount"),moreBadge=$("moreUnreadCount");
+ const tab=document.querySelector('.tab[data-tab="notifications"]'),badge=$("notificationUnreadCount");
  if(tab)tab.classList.toggle("has-unread",!!count);
  if(badge){badge.textContent=count>99?"99+":String(count||"");badge.classList.toggle("hidden",!count)}
- if(moreBadge){moreBadge.textContent=count>99?"99+":String(count||"");moreBadge.classList.toggle("hidden",!count)}
 }
 async function loadNotifications(){
  const root=$("notificationsList");if(!root)return;

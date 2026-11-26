@@ -823,3 +823,16 @@ html[data-theme="dark"] .room-emoji-bar button{background:#ffffff0b;border-color
  #view-rooms.room-chat-active .room-emoji-bar button{flex-basis:32px;width:32px;height:30px}
  #view-rooms.room-chat-active .room-chat-panel .chat-form{padding-top:5px!important}
 }
+
+
+/* Emoji tray stays collapsed until requested */
+.room-emoji-bar.hidden{display:none!important}
+.room-emoji-toggle{flex:0 0 42px;width:42px;height:44px;display:grid;place-items:center;
+ border:1px solid var(--line);border-radius:14px;background:#ffffff0b;color:inherit;
+ font-size:23px;line-height:1;padding:0}
+.room-emoji-toggle.active{background:#a25cff25;border-color:#a25cff88;color:#bd8aff}
+html[data-theme="dark"] .room-emoji-toggle{background:#ffffff0b;border-color:#ffffff22}
+@media(max-width:700px){
+ #view-rooms.room-chat-active .room-chat-panel .chat-form{gap:7px}
+ #view-rooms.room-chat-active .room-emoji-toggle{flex-basis:40px;width:40px;height:46px}
+}

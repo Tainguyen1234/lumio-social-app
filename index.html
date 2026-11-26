@@ -59,7 +59,7 @@
       </section>
       <section id="view-profile" class="view hidden">
         <div class="section-head"><div><h3>Hồ sơ của tôi</h3><p>Giới thiệu một chút về bạn</p></div></div>
-        <form id="profileForm" class="profile-form"><label>Tên hiển thị<input id="displayName" maxlength="30" placeholder="Tên bạn muốn mọi người gọi" required></label><label>Giới thiệu<textarea id="bio" maxlength="160" placeholder="Một điều thú vị về bạn..."></textarea></label><label>Quốc gia<input id="country" maxlength="40" placeholder="Ví dụ: Việt Nam"></label><label>Sở thích<input id="interests" maxlength="100" placeholder="Âm nhạc, du lịch, game..."></label><button class="primary" type="submit">Lưu hồ sơ</button></form>
+        <form id="profileForm" class="profile-form"><div class="avatar-editor"><div class="avatar avatar-preview" id="profileAvatarPreview">L</div><div class="avatar-editor-actions"><strong>Ảnh đại diện</strong><small>JPG, PNG hoặc WebP · tối đa 5 MB</small><label class="secondary avatar-upload-label" for="avatarFile">Chọn ảnh</label><input id="avatarFile" type="file" accept="image/jpeg,image/png,image/webp" hidden></div></div><label>Tên hiển thị<input id="displayName" maxlength="30" placeholder="Tên bạn muốn mọi người gọi" required></label><label>Giới thiệu<textarea id="bio" maxlength="160" placeholder="Một điều thú vị về bạn..."></textarea></label><label>Quốc gia<input id="country" maxlength="40" placeholder="Ví dụ: Việt Nam"></label><label>Sở thích<input id="interests" maxlength="100" placeholder="Âm nhạc, du lịch, game..."></label><button class="primary" type="submit">Lưu hồ sơ</button></form>
         <button id="logoutButton" class="secondary full">Đăng xuất</button>
       </section>
       <section id="view-messages" class="view hidden">

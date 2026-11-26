@@ -51,8 +51,14 @@ function renderPersonCard(p,list,isDemo){
    like.disabled=false;return;
   }
   const {data:backLike}=await db.from("likes").select("id").eq("from_user",p.id).eq("to_user",user.id).maybeSingle();
-  if(backLike){like.textContent="✓ Đã tương hợp";toast("Hai bạn đã thích nhau! Đây là một kết nối mới.");}
-  else{like.textContent="✓ Đã gửi";toast("Đã gửi lời thích! Chờ người ấy phản hồi nhé.");}
+  if(backLike){
+   like.textContent="✓ Đã tương hợp";
+   toast("Hai bạn đã thích nhau! Đã mở kết nối mới.");
+   await loadMatches();
+  } else {
+   like.textContent="✓ Đã gửi";
+   toast("Đã gửi lời thích! Chờ người ấy phản hồi nhé.");
+  }
  };
  actions.append(pass,like);el.append(top,bio,actions);list.appendChild(el);
 }

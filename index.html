@@ -33,8 +33,8 @@
       </nav>
       <section id="view-discover" class="view">
         <div class="section-head"><div><h3>Khám phá cộng đồng</h3><p>Những người có thể hợp vibe với bạn</p></div><button id="refreshPeople" class="secondary small" type="button">↻ Làm mới</button></div>
-        <div class="filters"><button class="chip selected">Dành cho bạn</button><button class="chip">Toàn cầu</button><button class="chip">Cùng sở thích</button></div>
-        <div id="people" class="people"></div>
+        <div class="people-tools"><label class="people-search"><span>⌕</span><input id="peopleSearch" type="search" placeholder="Tìm tên, quốc gia, sở thích..." autocomplete="off" aria-label="Tìm thành viên"></label><button id="clearPeopleSearch" class="clear-search hidden" type="button" aria-label="Xóa tìm kiếm">×</button></div><div class="filters" id="peopleFilters"><button class="chip selected" data-people-filter="recommended" type="button">✦ Dành cho bạn</button><button class="chip" data-people-filter="all" type="button">🌍 Toàn cầu</button><button class="chip" data-people-filter="interests" type="button">♡ Cùng sở thích</button></div>
+        <div id="peopleResultCount" class="people-result-count" aria-live="polite"></div><div id="people" class="people"></div>
       </section>
       <section id="view-mood" class="view hidden">
         <div class="section-head"><div><h3>Mood Match</h3><p>Chọn cảm xúc để tìm người cùng tần số</p></div></div>

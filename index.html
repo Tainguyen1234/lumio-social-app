@@ -28,7 +28,7 @@
         <button class="tab" data-tab="mood">✧<span>Tâm trạng</span></button>
         <button class="tab" data-tab="play">◈<span>Trò chơi</span></button>
         <button class="tab" data-tab="rooms">◉<span>Phòng</span></button>
-        <button class="tab" data-tab="profile">♙<span>Cá nhân</span></button>
+        <button class="tab" data-tab="profile">♙<span>Cá nhân</span></button><button id="openMessages" class="tab" data-tab="messages">♡<span>Tin nhắn</span></button>
       </nav>
       <section id="view-discover" class="view">
         <div class="section-head"><div><h3>Khám phá cộng đồng</h3><p>Những người có thể hợp vibe với bạn</p></div><button id="refreshPeople" class="secondary small" type="button">↻ Làm mới</button></div>
@@ -63,7 +63,7 @@
         <button id="logoutButton" class="secondary full">Đăng xuất</button>
       </section>
       <section id="view-messages" class="view hidden">
-        <div class="section-head"><div><h3>Tin nhắn</h3><p>Những kết nối của bạn</p></div></div><div id="messagesList" class="notice">Bạn chưa có cuộc trò chuyện nào.</div>
+        <div class="section-head"><div><h3>Tin nhắn</h3><p>Những kết nối của bạn</p></div></div><div id="messagesList" class="match-list notice">Bạn chưa có cuộc trò chuyện nào.</div><section id="chatPanel" class="chat-panel hidden"><div class="chat-head"><button id="closeChat" class="secondary small" type="button">← Quay lại</button><strong id="chatTitle">Trò chuyện</strong></div><div id="chatMessages" class="chat-messages"></div><form id="chatForm" class="chat-form"><input id="chatInput" maxlength="2000" placeholder="Nhập tin nhắn..." autocomplete="off" required><button id="sendChat" class="primary" type="submit">Gửi</button></form></section>
       </section>
       <div class="bottom-note">LUMIO · Connect with kindness ✦</div>
     </section>

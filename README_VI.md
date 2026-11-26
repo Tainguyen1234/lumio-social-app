@@ -6,7 +6,7 @@
 - Có sẵn điểm tích hợp Supabase Auth và lưu hồ sơ.
 - Có SQL khởi tạo bảng hồ sơ, lượt thích và tin nhắn với Row Level Security.
 
-**Trung thực về trạng thái:** Nếu chưa cấu hình Supabase, đăng nhập, hồ sơ dùng chung, ghép đôi, nhắn tin realtime và voice room chưa hoạt động giữa nhiều người. Demo chỉ lưu một số thông tin trên thiết bị. Phần likes/messages trong SQL là nền tảng backend ban đầu, chưa phải giao diện chat hoàn chỉnh.
+**Trạng thái cập nhật 26/11/2026:** Project Supabase `lumio-production` đã được kết nối trong `config.js`. Bảng hồ sơ, likes, matches và messages đã có; tự tạo hồ sơ khi đăng ký, ghép đôi hai chiều, giao diện chat riêng và realtime đã được nối. Chính sách RLS đã được siết để chỉ người đã match mới đọc/gửi tin nhắn. Demo vẫn chỉ là dữ liệu mẫu trên thiết bị. Voice Rooms, report/block, kiểm duyệt và xóa tài khoản vẫn chưa triển khai.
 
 ## A. Chạy thử trên Windows 11
 1. Tải và giải nén `LUMIO_MVP_1_0.zip`.
@@ -53,9 +53,11 @@ Lưu ý: Không thể cài PWA trực tiếp từ `file://`; phải dùng HTTPS 
 LUMIO hướng tới người trưởng thành ở bản MVP. Trước khi ra mắt công khai cần xác định chính sách độ tuổi, điều khoản, chính sách quyền riêng tư, báo cáo/chặn, xử lý nội dung và quy trình phản hồi sự cố. Không mở chat/voice công khai nếu chưa có kiểm duyệt và cơ chế an toàn phù hợp.
 
 
-## E. Bật ghép đôi hai chiều và chat riêng
-1. Mở Supabase → SQL Editor → New query.
-2. Mở file `supabase_social_messaging.sql` trong GitHub, sao chép toàn bộ và chạy một lần.
-3. Bản cập nhật tạo bảng `matches`, tự tạo match khi hai người cùng thích nhau và giới hạn đọc/gửi tin nhắn cho đúng hai người đã match.
-4. Mở lại LUMIO, đăng nhập, vào tab **Tin nhắn**. Khi có match thật, chọn người đó để trò chuyện.
-5. Nếu đã có cuộc trò chuyện cũ nhưng chưa có dòng trong `matches`, hai người cần tương hợp lại để tạo match.
+## E. Trạng thái ghép đôi hai chiều và chat riêng
+Backend đã được áp dụng migration trực tiếp trên Supabase: trigger tạo match khi hai người cùng thích nhau; tin nhắn chỉ được đọc/gửi giữa hai tài khoản đã match; tin nhắn được bật Realtime. Khi có tương hợp, tab **Tin nhắn** sẽ liệt kê người đó để mở chat. Bản `app.js` mới cũng tự làm mới danh sách kết nối sau khi phát hiện tương hợp.
+
+## F. Việc cần hoàn thành trước beta công khai
+- Bật **Leaked Password Protection** trong Supabase Auth để chặn mật khẩu đã bị lộ.
+- Thử đăng ký hai tài khoản riêng, xác nhận email, cập nhật hồ sơ, like chéo và gửi/nhận tin nhắn trên hai thiết bị/trình duyệt.
+- Bổ sung report/block, kiểm duyệt, giới hạn tuổi, điều khoản, chính sách quyền riêng tư và quy trình xóa tài khoản.
+- Triển khai HTTPS hosting và kiểm tra URL thực tế trên iPhone.

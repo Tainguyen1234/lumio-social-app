@@ -342,3 +342,32 @@ html[data-theme="dark"] .tab .unread-count{border-color:#171027}
 .presence-label.is-offline{color:var(--muted)!important}
 html[data-theme="dark"] .presence-label.is-online{color:#69e6b2!important}
 html[data-theme="dark"] .presence-label.is-offline{color:#b9aecb!important}
+
+
+/* LUMIO Discover tools — instant search and smart filters */
+.people-tools{display:flex;align-items:center;gap:8px;margin:18px 0 12px}
+.people-search{display:flex;align-items:center;gap:10px;flex:1;min-width:0;padding:0 15px;height:48px;border:1px solid #e8e3f0;border-radius:15px;background:#fff;box-shadow:0 5px 18px #5142760b}
+.people-search>span{font-size:23px;color:#8c72db;line-height:1}
+.people-search input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#302a45;font:500 13px Manrope,system-ui,sans-serif}
+.people-search input::placeholder{color:#aaa3b7}
+.clear-search{width:38px;height:38px;border-radius:12px;background:#f0ebfa;color:#7258ca;font-size:22px}
+.people-result-count{min-height:18px;margin:0 2px 10px;color:#89829a;font-size:10px}
+.people-empty{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;gap:9px;padding:36px 18px;border:1px dashed #dcd4eb;border-radius:18px;background:#ffffff9c;text-align:center}
+.people-empty>span{font-size:30px;color:#9879df}
+.people-empty strong{font-size:13px;color:#4d4564}
+.people-empty small{font-size:11px;color:#8b849d}
+.people-empty button{margin-top:5px}
+html[data-theme="dark"] .people-search{background:#211a2e;border-color:#ffffff20;box-shadow:none}
+html[data-theme="dark"] .people-search input{color:#f4efff}
+html[data-theme="dark"] .people-search input::placeholder{color:#9385a8}
+html[data-theme="dark"] .clear-search{color:#e7d8ff;background:#ffffff14}
+html[data-theme="dark"] .people-result-count{color:#b5a9c8}
+html[data-theme="dark"] .people-empty{background:#211a2e;border-color:#ffffff28}
+html[data-theme="dark"] .people-empty strong{color:#f4efff}
+html[data-theme="dark"] .people-empty small{color:#b5a9c8}
+@media(max-width:700px){
+ .people-tools{margin-top:15px}
+ .people-search{height:46px}
+ .people{grid-template-columns:1fr}
+ .person{padding:15px}
+}

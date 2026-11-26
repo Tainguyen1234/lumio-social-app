@@ -590,6 +590,24 @@ function setupFeedRealtime(){
  feedChannel=db.channel("lumio-social-feed").on("postgres_changes",{event:"*",schema:"public",table:"posts"},()=>loadFeed()).on("postgres_changes",{event:"*",schema:"public",table:"post_comments"},()=>loadFeed()).on("postgres_changes",{event:"*",schema:"public",table:"post_reactions"},()=>loadFeed()).subscribe();
 }
 
+async function submitBetaFeedback(event){
+ event.preventDefault();
+ if(!db){$("feedbackStatus").textContent="Chưa kết nối được máy chủ. Vui lòng thử lại sau.";return}
+ const rating=Number(document.querySelector('input[name="feedbackRating"]:checked')?.value);
+ const message=$("feedbackMessage").value.trim();
+ if(!rating||message.length<8){$("feedbackStatus").textContent="Vui lòng chọn đánh giá và nhập góp ý ít nhất 8 ký tự.";return}
+ const button=$("submitFeedback");button.disabled=true;button.textContent="Đang gửi...";
+ const ua=navigator.userAgent||"";
+ const detected=$("feedbackDevice").value;
+ const device=detected;
+ const {error}=await db.from("beta_feedback").insert({
+  user_id:user?.id||null,category:$("feedbackCategory").value,rating,message,
+  device,contact:$("feedbackContact").value.trim()||null,app_version:"public-beta"
+ });
+ button.disabled=false;button.textContent="Gửi góp ý ↗";
+ if(error){$("feedbackStatus").textContent="Chưa gửi được góp ý. Vui lòng thử lại.";console.warn("LUMIO feedback submission failed:",error.message);return}
+ $("betaFeedbackForm").reset();$("feedbackStatus").textContent="Cảm ơn bạn! Góp ý đã được gửi đến nhóm LUMIO ✦";
+}
 function switchTab(tab){
  document.querySelectorAll(".tab[data-tab]").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
  document.querySelectorAll(".more-nav-item").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
@@ -611,6 +629,7 @@ function toggleMoreNav(force){
 document.querySelectorAll(".tab[data-tab],.more-nav-item").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
 $("moreNavButton").onclick=()=>toggleMoreNav();
 document.addEventListener("click",e=>{if(!$("moreNavMenu")?.contains(e.target)&&!$("moreNavButton")?.contains(e.target))toggleMoreNav(false)});
+$("betaFeedbackForm").onsubmit=submitBetaFeedback;
 $("refreshFeed").onclick=()=>loadFeed();$("markAllNotificationsRead").onclick=markAllNotificationsRead;$("postComposer").onsubmit=publishPost;$("postImage").onchange=e=>setPostImagePreview(e.target.files?.[0]||null);
 $("refreshPeople").onclick=()=>renderPeople();
 $("openMessages").onclick=()=>{switchTab("messages");loadMatches()};

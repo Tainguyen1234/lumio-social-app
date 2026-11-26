@@ -113,8 +113,9 @@ function setupProfileRealtime(){
  if(profileChannel)db.removeChannel(profileChannel);
  profileChannel=db.channel("lumio-profiles-"+user.id).on("postgres_changes",{event:"UPDATE",schema:"public",table:"profiles"},payload=>{
   if(payload.new?.id===user.id){
-   const fields=["display_name","bio","country","interests","avatar_url"];
-   if(fields.some(k=>payload.old?.[k]!==payload.new?.[k]))syncProfileFromServer();
+   const current=profile||{};
+   const changed=payload.new?.display_name!==(current.name||"")||payload.new?.bio!==(current.bio||"")||payload.new?.country!==(current.country||"Việt Nam")||payload.new?.interests!==(current.interests||"")||payload.new?.avatar_url!==(current.avatar_url||"");
+   if(changed)syncProfileFromServer();
    return;
   }
   renderPeople();loadMatches();

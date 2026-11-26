@@ -3,7 +3,7 @@ const $ = id => document.getElementById(id);
 const cfg = window.LUMIO_CONFIG || {};
 const hasBackend = !!(cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY && window.supabase);
 const db = hasBackend ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY) : null;
-let user = null, isLogin = false, demo = false, currentMood = "", profile = null, activeChat = null, messageChannel = null, chatRefreshTimer = null, inboxChannel = null;
+let user = null, isLogin = false, demo = false, currentMood = "", profile = null, activeChat = null, messageChannel = null, chatRefreshTimer = null, inboxChannel = null, profileChannel = null;
 const demoPeople = [
  {id:"demo-1",name:"Mia",age:20,country:"Việt Nam",mood:"Vui vẻ",bio:"Âm nhạc, du lịch và những cuộc trò chuyện thú vị.",initial:"M",color:"pink"},
  {id:"demo-2",name:"Alex",age:23,country:"Singapore",mood:"Khám phá",bio:"Thích game indie, cà phê và khám phá văn hóa.",initial:"A",color:"blue"},
@@ -35,7 +35,15 @@ function setupInboxRealtime(){
  }).subscribe();
  refreshUnreadBadge();
 }
-function showApp(){ $("welcome").classList.add("hidden");$("app").classList.remove("hidden");$("authButton").textContent=user?"Tài khoản":"Đăng nhập";loadProfile();syncProfileFromServer();renderPeople();loadMatches();setupInboxRealtime();}
+function setupProfileRealtime(){
+ if(!db||!user)return;
+ if(profileChannel)db.removeChannel(profileChannel);
+ profileChannel=db.channel("lumio-profiles-"+user.id).on("postgres_changes",{event:"UPDATE",schema:"public",table:"profiles"},payload=>{
+  if(payload.new?.id===user.id){syncProfileFromServer();return}
+  renderPeople();loadMatches();
+ }).subscribe();
+}
+function showApp(){ $("welcome").classList.add("hidden");$("app").classList.remove("hidden");$("authButton").textContent=user?"Tài khoản":"Đăng nhập";loadProfile();syncProfileFromServer();renderPeople();loadMatches();setupInboxRealtime();setupProfileRealtime();}
 function showWelcome(){ $("app").classList.add("hidden");$("welcome").classList.remove("hidden");}
 function openAuth(login=false){isLogin=login;$("authTitle").textContent=login?"Đăng nhập LUMIO":"Tạo tài khoản LUMIO";$("authHint").textContent=login?"Chào mừng bạn quay trở lại.":"Đăng ký để tạo hồ sơ và bắt đầu kết nối."; $("authSubmit").textContent=login?"Đăng nhập":"Tạo tài khoản";$("switchAuth").textContent=login?"Chưa có tài khoản? Đăng ký":"Đã có tài khoản? Đăng nhập";$("authMessage").textContent="";$("authModal").classList.remove("hidden")}
 function closeAuth(){$("authModal").classList.add("hidden")}
@@ -71,6 +79,8 @@ async function uploadAvatar(file){
  if(file.size>5*1024*1024){say("Ảnh vượt quá 5 MB.");toast("Ảnh tối đa 5 MB.");return}
  const ext=allowed[mime],path=user.id+"/avatar."+ext,picker=$("avatarFile");
  picker.disabled=true;say("Đang tải ảnh lên...");
+ const previewUrl=URL.createObjectURL(file);
+ paintAvatar($("profileAvatarPreview"),previewUrl,$("displayName").value.trim());
  try{
   const {error:upErr}=await db.storage.from("lumio-avatars").upload(path,file,{upsert:true,contentType:mime,cacheControl:"3600"});
   if(upErr)throw upErr;
@@ -80,8 +90,8 @@ async function uploadAvatar(file){
   const {error:saveErr}=await db.from("profiles").upsert({id:user.id,display_name:p.name||user.email?.split("@")[0]||"Lumio Member",bio:p.bio,country:p.country,interests:p.interests,avatar_url,updated_at:new Date().toISOString()});
   if(saveErr)throw saveErr;
   profile=p;localStorage.setItem("lumio_profile",JSON.stringify(p));loadProfile();await renderPeople();await loadMatches();say("Ảnh đại diện đã được cập nhật.");toast("Đã cập nhật ảnh đại diện!");
- }catch(err){say("Tải ảnh thất bại: "+err.message);toast("Chưa tải được ảnh: "+err.message)}
- finally{picker.disabled=false;picker.value=""}
+ }catch(err){loadProfile();say("Tải ảnh thất bại: "+err.message);toast("Chưa tải được ảnh: "+err.message)}
+ finally{URL.revokeObjectURL(previewUrl);picker.disabled=false;picker.value=""}
 }
 async function renderPeople(){
  const list=$("people"); list.innerHTML="";
@@ -206,7 +216,7 @@ $("resendConfirmation").onclick=async()=>{const email=$("email").value.trim();if
 $("authForm").onsubmit=async e=>{e.preventDefault();const email=$("email").value.trim(),password=$("password").value; if(!db){$("authMessage").textContent="Chưa kết nối Supabase. Hãy dùng bản demo hoặc cấu hình backend theo README.";return} $("authSubmit").disabled=true;try{const res=isLogin?await db.auth.signInWithPassword({email,password}):await db.auth.signUp({email,password,options:{emailRedirectTo:new URL("./",window.location.href).href}});if(res.error)throw res.error;if(!isLogin&&!res.data.session){$("authMessage").textContent="Đã gửi email xác nhận. Hãy mở Gmail để xác nhận."; $("resendConfirmation").classList.remove("hidden"); return}user=res.data.user;demo=false;closeAuth();showApp();toast("Đăng nhập thành công")}catch(err){$("authMessage").textContent=err.message||"Có lỗi xảy ra"}finally{$("authSubmit").disabled=false}};
 $("profileForm").onsubmit=async e=>{e.preventDefault();const p={...(profile||{}),name:$("displayName").value.trim(),bio:$("bio").value.trim(),country:$("country").value.trim(),interests:$("interests").value.trim()};localStorage.setItem("lumio_profile",JSON.stringify(p));profile=p;if(db&&user){const {error}=await db.from("profiles").upsert({id:user.id,display_name:p.name,bio:p.bio,country:p.country,interests:p.interests,avatar_url:p.avatar_url||null,updated_at:new Date().toISOString()});if(error){toast("Đã lưu trên thiết bị; đồng bộ lỗi: "+error.message);return}}loadProfile();toast("Đã lưu hồ sơ")}
 $("avatarFile").onchange=e=>{const file=e.target.files?.[0];if(file)uploadAvatar(file)};
-$("logoutButton").onclick=async()=>{if(inboxChannel){db.removeChannel(inboxChannel);inboxChannel=null}if(db&&user)await db.auth.signOut();user=null;demo=false;showWelcome();toast("Bạn đã đăng xuất")};
+$("logoutButton").onclick=async()=>{if(inboxChannel){db.removeChannel(inboxChannel);inboxChannel=null}if(profileChannel){db.removeChannel(profileChannel);profileChannel=null}if(db&&user)await db.auth.signOut();user=null;demo=false;showWelcome();toast("Bạn đã đăng xuất")};
 document.querySelectorAll(".mood").forEach(b=>b.onclick=async()=>{document.querySelectorAll(".mood").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");currentMood=b.dataset.mood;$("moodResult").textContent="Tâm trạng của bạn: "+currentMood+". Hãy khám phá những người cùng tần số!";if(user&&db){const {error}=await db.from("profiles").upsert({id:user.id,display_name:profile?.name||"Lumio Member",mood:currentMood});if(error)toast("Chưa đồng bộ được tâm trạng")}else toast("Đã chọn mood: "+currentMood)});
 $("nextQuestion").onclick=()=>{$("question").textContent=questions[++qIndex%questions.length]};
 if(db){db.auth.getSession().then(({data})=>{if(data.session){user=data.session.user;showApp()}});db.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;if(user)showApp()})}

@@ -7,7 +7,7 @@
   <title>LUMIO — Connect • Play • Vibe</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=rooms-clean-composer-8">
+  <link rel="stylesheet" href="styles.css?v=private-typing-9">
   <script>try{document.documentElement.dataset.theme=localStorage.getItem("lumio-theme")==="dark"?"dark":"light"}catch(e){document.documentElement.dataset.theme="light"}</script>
 </head>
 <body>
@@ -81,7 +81,7 @@
         <button id="logoutButton" class="secondary full">Đăng xuất</button>
       </section>
       <section id="view-messages" class="view hidden">
-        <div class="section-head"><div><h3>Tin nhắn</h3><p>Những kết nối của bạn</p></div></div><div id="messagesList" class="match-list notice">Bạn chưa có cuộc trò chuyện nào.</div><section id="chatPanel" class="chat-panel hidden"><div class="chat-head"><button id="closeChat" class="secondary small" type="button">← Quay lại</button><strong id="chatTitle">Trò chuyện</strong></div><div id="chatMessages" class="chat-messages"></div><form id="chatForm" class="chat-form"><input id="chatInput" maxlength="2000" placeholder="Nhập tin nhắn..." autocomplete="off" required><button id="sendChat" class="primary" type="submit">Gửi</button></form></section>
+        <div class="section-head"><div><h3>Tin nhắn</h3><p>Những kết nối của bạn</p></div></div><div id="messagesList" class="match-list notice">Bạn chưa có cuộc trò chuyện nào.</div><section id="chatPanel" class="chat-panel hidden"><div class="chat-head"><button id="closeChat" class="secondary small" type="button">← Quay lại</button><strong id="chatTitle">Trò chuyện</strong></div><div id="chatMessages" class="chat-messages"></div><div id="chatTypingIndicator" class="chat-typing hidden" aria-live="polite">Đang nhập tin nhắn…</div><form id="chatForm" class="chat-form"><input id="chatInput" maxlength="2000" placeholder="Nhập tin nhắn..." autocomplete="off" required><button id="sendChat" class="primary" type="submit">Gửi</button></form></section>
       </section>
       <div class="bottom-note">LUMIO · Connect with kindness ✦</div>
     </section>
@@ -91,5 +91,5 @@
 <button id="resendConfirmation" class="secondary full hidden" type="button">Gửi lại email xác nhận</button></form><button id="switchAuth" class="text-button">Đã có tài khoản? Đăng nhập</button><p id="authMessage" class="form-message"></p></div></div>
   <div id="toast" class="toast hidden"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2'"></script>
-  <script src="config.js?v=notifications-1"></script><script src="app.js?v=rooms-clean-composer-8"></script>
+  <script src="config.js?v=notifications-1"></script><script src="app.js?v=private-typing-9"></script>
 </body></html>

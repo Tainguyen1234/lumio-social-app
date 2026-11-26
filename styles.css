@@ -882,3 +882,23 @@ html[data-theme="dark"] .room-emoji-toggle{background:#ffffff0b;border-color:#ff
 .chat-typing{min-height:22px;padding:2px 14px 5px;color:#9b78ce;font-size:11px;font-weight:700;letter-spacing:.1px}
 .chat-typing.hidden{display:none!important}
 html[data-theme="dark"] .chat-typing{color:#c5a2f5}
+
+
+/* LUMIO futuristic inbox threads */
+#view-messages .inbox-live-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border:1px solid #a977ed45;border-radius:999px;background:#a977ed12;color:#b98af2;font-size:9px;font-weight:800;letter-spacing:1px;white-space:nowrap}
+#view-messages .inbox-live-pill i{width:6px;height:6px;border-radius:50%;background:#42d6a0;box-shadow:0 0 10px #42d6a0;display:inline-block}
+#view-messages .message-thread{position:relative;min-width:0;gap:11px;padding:13px 12px;border-radius:18px;background:linear-gradient(115deg,#ffffff0b,#a66aff08);border:1px solid #a98ad51c;transition:transform .18s,border-color .18s,background .18s}
+#view-messages .message-thread:active{transform:scale(.985)}
+#view-messages .message-thread.has-unread{border-color:#a977ed70;background:linear-gradient(110deg,#a977ed19,#ffffff09)}
+#view-messages .message-thread .match-avatar{position:relative;flex:0 0 46px;width:46px;height:46px;border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px #c49aff30,0 5px 18px #8b4fe522}
+#view-messages .message-thread .match-avatar img{width:100%;height:100%;object-fit:cover}
+#view-messages .message-thread .match-label{min-width:0;gap:4px}
+#view-messages .message-thread .match-label b{font-size:13px;letter-spacing:.1px}
+#view-messages .message-thread .thread-preview{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:11px;font-weight:500}
+#view-messages .message-thread.has-unread .thread-preview{color:var(--text);font-weight:700}
+#view-messages .thread-meta{display:flex;flex:0 0 auto;flex-direction:column;align-items:flex-end;justify-content:center;gap:7px;margin-left:2px}
+#view-messages .thread-time{font-size:9px;color:var(--muted);white-space:nowrap}
+#view-messages .thread-unread{min-width:19px;height:19px;padding:0 5px;display:grid;place-items:center;border-radius:99px;background:linear-gradient(135deg,#9c61f5,#d65acb);color:#fff;font-size:9px;font-weight:800;box-shadow:0 0 14px #a45be655}
+html[data-theme="dark"] #view-messages .message-thread{background:linear-gradient(115deg,#ffffff0b,#a66aff0a);border-color:#b995e52a}
+html[data-theme="dark"] #view-messages .message-thread.has-unread{border-color:#a977ed85}
+@media(max-width:380px){#view-messages .message-thread{gap:8px;padding:11px 9px}#view-messages .message-thread .match-avatar{width:41px;height:41px;flex-basis:41px}}

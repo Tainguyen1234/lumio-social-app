@@ -54,22 +54,33 @@ async function syncProfileFromServer(){
  profile=p;localStorage.setItem("lumio_profile",JSON.stringify(p));loadProfile();
 }
 async function uploadAvatar(file){
- if(!file||!db||!user){toast("Hãy đăng nhập để tải ảnh đại diện.");return}
- if(!["image/jpeg","image/png","image/webp"].includes(file.type)){toast("Vui lòng chọn ảnh JPG, PNG hoặc WebP.");return}
- if(file.size>5*1024*1024){toast("Ảnh tối đa 5 MB.");return}
- const ext=file.type==="image/png"?"png":file.type==="image/webp"?"webp":"jpg";
- const path=user.id+"/avatar."+ext;
- const picker=$("avatarFile");picker.disabled=true;
+ const status=$("avatarStatus");
+ const say=msg=>{if(status)status.textContent=msg};
+ if(!file||!db||!user){say("Hãy đăng nhập để tải ảnh đại diện.");toast("Hãy đăng nhập để tải ảnh đại diện.");return}
+ const name=(file.name||"").toLowerCase();
+ let mime=file.type||"";
+ if(!mime.startsWith("image/")){
+  if(name.endsWith(".heic"))mime="image/heic";
+  else if(name.endsWith(".heif"))mime="image/heif";
+  else if(name.endsWith(".png"))mime="image/png";
+  else if(name.endsWith(".webp"))mime="image/webp";
+  else if(name.endsWith(".jpg")||name.endsWith(".jpeg"))mime="image/jpeg";
+ }
+ const allowed={"image/jpeg":"jpg","image/png":"png","image/webp":"webp","image/heic":"heic","image/heif":"heif"};
+ if(!allowed[mime]){say("Định dạng ảnh chưa hỗ trợ. Hãy chọn JPG, PNG, WebP hoặc HEIC.");toast("Định dạng ảnh chưa hỗ trợ.");return}
+ if(file.size>5*1024*1024){say("Ảnh vượt quá 5 MB.");toast("Ảnh tối đa 5 MB.");return}
+ const ext=allowed[mime],path=user.id+"/avatar."+ext,picker=$("avatarFile");
+ picker.disabled=true;say("Đang tải ảnh lên...");
  try{
-  const {error:upErr}=await db.storage.from("lumio-avatars").upload(path,file,{upsert:true,contentType:file.type,cacheControl:"3600"});
+  const {error:upErr}=await db.storage.from("lumio-avatars").upload(path,file,{upsert:true,contentType:mime,cacheControl:"3600"});
   if(upErr)throw upErr;
   const {data}=db.storage.from("lumio-avatars").getPublicUrl(path);
   const avatar_url=data.publicUrl+"?v="+Date.now();
   const p={...(profile||{}),name:$("displayName").value.trim(),bio:$("bio").value.trim(),country:$("country").value.trim(),interests:$("interests").value.trim(),avatar_url};
   const {error:saveErr}=await db.from("profiles").upsert({id:user.id,display_name:p.name||user.email?.split("@")[0]||"Lumio Member",bio:p.bio,country:p.country,interests:p.interests,avatar_url,updated_at:new Date().toISOString()});
   if(saveErr)throw saveErr;
-  profile=p;localStorage.setItem("lumio_profile",JSON.stringify(p));loadProfile();await renderPeople();await loadMatches();toast("Đã cập nhật ảnh đại diện!");
- }catch(err){toast("Chưa tải được ảnh: "+err.message)}
+  profile=p;localStorage.setItem("lumio_profile",JSON.stringify(p));loadProfile();await renderPeople();await loadMatches();say("Ảnh đại diện đã được cập nhật.");toast("Đã cập nhật ảnh đại diện!");
+ }catch(err){say("Tải ảnh thất bại: "+err.message);toast("Chưa tải được ảnh: "+err.message)}
  finally{picker.disabled=false;picker.value=""}
 }
 async function renderPeople(){

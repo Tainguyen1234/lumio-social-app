@@ -44,9 +44,15 @@ function formatLastSeen(value){
  return "Hoạt động ngày "+new Intl.DateTimeFormat("vi-VN",{day:"2-digit",month:"2-digit",year:"numeric"}).format(new Date(value));
 }
 function appendPresenceLabel(parent,id,lastSeen){
- const status=document.createElement("small");
- status.className="presence-label "+(onlineUserIds.has(id)?"is-online":"is-offline");
- status.textContent=onlineUserIds.has(id)?"Đang online":formatLastSeen(lastSeen);
+ const online=onlineUserIds.has(id);
+ const status=document.createElement("span");
+ status.className="presence-label "+(online?"is-online":"is-offline");
+ const dot=document.createElement("i");
+ dot.className="presence-dot";
+ dot.setAttribute("aria-hidden","true");
+ const text=document.createElement("span");
+ text.textContent=online?"Online":formatLastSeen(lastSeen);
+ status.append(dot,text);
  parent.append(status);
 }
 async function saveLastSeen(){
@@ -63,7 +69,7 @@ async function setupPresenceRealtime(){
  if(!db||!user)return;
  if(presenceChannel)await db.removeChannel(presenceChannel);
  if(presenceHeartbeat)clearInterval(presenceHeartbeat);
- presenceChannel=db.channel("lumio-global-presence")
+ presenceChannel=db.channel("lumio-global-presence",{config:{presence:{key:user.id}}})
   .on("presence",{event:"sync"},()=>{
    const state=presenceChannel.presenceState();
    onlineUserIds=new Set(Object.values(state).flat().map(x=>x.user_id).filter(Boolean));

@@ -51,3 +51,11 @@ Lưu ý: Không thể cài PWA trực tiếp từ `file://`; phải dùng HTTPS 
 
 ## Bảo vệ người dùng
 LUMIO hướng tới người trưởng thành ở bản MVP. Trước khi ra mắt công khai cần xác định chính sách độ tuổi, điều khoản, chính sách quyền riêng tư, báo cáo/chặn, xử lý nội dung và quy trình phản hồi sự cố. Không mở chat/voice công khai nếu chưa có kiểm duyệt và cơ chế an toàn phù hợp.
+
+
+## E. Bật ghép đôi hai chiều và chat riêng
+1. Mở Supabase → SQL Editor → New query.
+2. Mở file `supabase_social_messaging.sql` trong GitHub, sao chép toàn bộ và chạy một lần.
+3. Bản cập nhật tạo bảng `matches`, tự tạo match khi hai người cùng thích nhau và giới hạn đọc/gửi tin nhắn cho đúng hai người đã match.
+4. Mở lại LUMIO, đăng nhập, vào tab **Tin nhắn**. Khi có match thật, chọn người đó để trò chuyện.
+5. Nếu đã có cuộc trò chuyện cũ nhưng chưa có dòng trong `matches`, hai người cần tương hợp lại để tạo match.

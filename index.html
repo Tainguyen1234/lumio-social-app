@@ -7,7 +7,7 @@
   <title>LUMIO — Connect • Play • Vibe</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=inbox-future-10">
+  <link rel="stylesheet" href="styles.css?v=public-beta-feedback-11">
   <script>try{document.documentElement.dataset.theme=localStorage.getItem("lumio-theme")==="dark"?"dark":"light"}catch(e){document.documentElement.dataset.theme="light"}</script>
 </head>
 <body>
@@ -35,6 +35,7 @@
           <button class="more-nav-item" data-tab="play"><span>◈</span>Trò chơi</button>
           <button class="more-nav-item" data-tab="rooms"><span>◉</span>Phòng</button>
           <button class="more-nav-item" data-tab="profile"><span>♙</span>Cá nhân</button>
+          <button class="more-nav-item" data-tab="feedback"><span>✦</span>Góp ý & Báo lỗi</button>
         </div>
       </nav>
       <section id="view-feed" class="view">
@@ -75,6 +76,19 @@
           <form id="roomChatForm" class="chat-form"><input id="roomChatInput" maxlength="1000" placeholder="Viết tin nhắn trong phòng..." autocomplete="off" aria-label="Tin nhắn trong phòng"><button class="primary small" id="sendRoomMessage" type="submit">Gửi</button></form>
         </div>
       </section>
+      <section id="view-feedback" class="view hidden">
+        <div class="section-head"><div><h3>Góp ý cho LUMIO</h3><p>Cùng bạn xây dựng cộng đồng tốt hơn</p></div><span class="beta-pill">BETA</span></div>
+        <div class="feedback-intro"><div class="feedback-orbit">✦</div><div><strong>Bạn trải nghiệm LUMIO thế nào?</strong><p>Mọi góp ý đều giúp chúng mình cải thiện sản phẩm. Hãy chia sẻ thật thoải mái nhé!</p></div></div>
+        <form id="betaFeedbackForm" class="beta-feedback-form">
+          <label>Điều bạn muốn góp ý<select id="feedbackCategory" required><option value="bug">Báo lỗi / Tính năng không hoạt động</option><option value="idea">Ý tưởng tính năng mới</option><option value="design">Giao diện và trải nghiệm</option><option value="performance">Tốc độ / Hiệu năng</option><option value="other">Ý kiến khác</option></select></label>
+          <fieldset class="feedback-rating"><legend>Bạn đánh giá LUMIO thế nào?</legend><div class="rating-options"><label><input type="radio" name="feedbackRating" value="1" required><span>1</span></label><label><input type="radio" name="feedbackRating" value="2"><span>2</span></label><label><input type="radio" name="feedbackRating" value="3"><span>3</span></label><label><input type="radio" name="feedbackRating" value="4"><span>4</span></label><label><input type="radio" name="feedbackRating" value="5"><span>5</span></label></div><small>1 = Chưa tốt · 5 = Rất tuyệt</small></fieldset>
+          <label>Góp ý chi tiết<textarea id="feedbackMessage" minlength="8" maxlength="2000" rows="5" required placeholder="Ví dụ: Tôi gặp lỗi khi..., Tôi mong muốn LUMIO có thêm..."></textarea></label>
+          <label>Bạn đang dùng thiết bị nào?<select id="feedbackDevice"><option value="iphone">iPhone / iPad</option><option value="android">Android</option><option value="desktop">Máy tính</option><option value="other">Thiết bị khác</option></select></label>
+          <label>Thông tin liên hệ (không bắt buộc)<input id="feedbackContact" maxlength="160" placeholder="Email hoặc cách liên hệ nếu bạn muốn nhận phản hồi"></label>
+          <p class="feedback-privacy">Thông tin liên hệ là tùy chọn. Góp ý được lưu để nhóm LUMIO xem xét; vui lòng không gửi mật khẩu hoặc thông tin nhạy cảm.</p>
+          <button id="submitFeedback" class="primary full" type="submit">Gửi góp ý ↗</button><p id="feedbackStatus" class="feedback-status" aria-live="polite"></p>
+        </form>
+      </section>
       <section id="view-profile" class="view hidden">
         <div class="section-head"><div><h3>Hồ sơ của tôi</h3><p>Giới thiệu một chút về bạn</p></div></div>
         <form id="profileForm" class="profile-form"><div class="avatar-editor"><div class="avatar avatar-preview" id="profileAvatarPreview">L</div><div class="avatar-editor-actions"><strong>Ảnh đại diện</strong><small>Thêm ảnh để bạn bè nhận ra bạn · hỗ trợ ảnh iPhone, tối đa 5 MB</small><small id="avatarStatus" aria-live="polite">Chưa chọn ảnh</small><label class="secondary avatar-upload-label" for="avatarFile">＋ Chọn ảnh đại diện</label><input id="avatarFile" type="file" accept="image/*" hidden></div></div><label>Tên hiển thị<input id="displayName" maxlength="30" placeholder="Tên bạn muốn mọi người gọi" required></label><label>Giới thiệu<textarea id="bio" maxlength="160" placeholder="Một điều thú vị về bạn..."></textarea></label><label>Quốc gia<input id="country" maxlength="40" placeholder="Ví dụ: Việt Nam"></label><label>Sở thích<input id="interests" maxlength="100" placeholder="Âm nhạc, du lịch, game..."></label><button class="primary" type="submit">Lưu hồ sơ</button></form>
@@ -91,5 +105,5 @@
 <button id="resendConfirmation" class="secondary full hidden" type="button">Gửi lại email xác nhận</button></form><button id="switchAuth" class="text-button">Đã có tài khoản? Đăng nhập</button><p id="authMessage" class="form-message"></p></div></div>
   <div id="toast" class="toast hidden"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2'"></script>
-  <script src="config.js?v=notifications-1"></script><script src="app.js?v=inbox-future-10"></script>
+  <script src="config.js?v=notifications-1"></script><script src="app.js?v=public-beta-feedback-11"></script>
 </body></html>

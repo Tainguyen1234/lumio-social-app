@@ -7,11 +7,12 @@
   <title>LUMIO — Connect • Play • Vibe</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=light-1">
+  <link rel="stylesheet" href="styles.css?v=theme-1">
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem("lumio-theme")==="dark"?"dark":"light"}catch(e){document.documentElement.dataset.theme="light"}</script>
 </head>
 <body>
   <div class="ambient a1"></div><div class="ambient a2"></div>
-  <header class="topbar"><a class="brand" href="#"><span class="brandmark">∞</span><span>LUMIO</span></a><span class="tagline">CONNECT · PLAY · VIBE</span><button id="authButton" class="ghost small">Đăng nhập</button></header>
+  <header class="topbar"><a class="brand" href="#"><span class="brandmark">∞</span><span>LUMIO</span></a><span class="tagline">CONNECT · PLAY · VIBE</span><button id="themeToggle" class="theme-toggle" type="button" aria-label="Chuyển giao diện">☾ Tối</button><button id="authButton" class="ghost small">Đăng nhập</button></header>
   <main>
     <section id="welcome" class="welcome panel">
       <div class="eyebrow">YOUR WORLD. YOUR VIBE.</div><h1>Gặp gỡ. Chơi cùng.<br><span>Kết nối khác biệt.</span></h1>

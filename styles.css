@@ -853,3 +853,18 @@ html[data-theme="dark"] .room-emoji-toggle{background:#ffffff0b;border-color:#ff
 #view-rooms.room-chat-active .room-chat-panel .chat-form{
  position:relative;z-index:3;flex:0 0 auto!important;flex-shrink:0!important;
 }
+
+
+/* Final composer layout: emoji tray is a real form row, never an overlay */
+#view-rooms.room-chat-active #roomChatForm{
+ display:flex!important;flex-wrap:wrap!important;align-items:center;
+ gap:7px;min-width:0;
+}
+#view-rooms.room-chat-active #roomChatForm #roomEmojiBar{
+ order:0;flex:0 0 100%!important;width:100%;min-width:0;
+ box-sizing:border-box;overflow-x:auto;overflow-y:hidden;
+}
+#view-rooms.room-chat-active #roomChatForm #toggleRoomEmoji{order:1;flex:0 0 40px}
+#view-rooms.room-chat-active #roomChatForm #roomChatInput{order:2;flex:1 1 0;min-width:0}
+#view-rooms.room-chat-active #roomChatForm #sendRoomMessage{order:3;flex:0 0 auto}
+#view-rooms.room-chat-active #roomChatMessages{flex:1 1 0!important;min-height:24px!important}

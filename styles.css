@@ -504,3 +504,6 @@ html[data-theme="dark"] .more-nav-item.active{background:#392b50;color:#d9c5ff}
  .bottom-nav .tab .nav-icon{font-size:20px}
  #app{padding-bottom:calc(108px + env(safe-area-inset-bottom))!important}
 }
+
+/* Six destinations in the LUMIO bottom bar */
+.bottom-nav{grid-template-columns:repeat(6,minmax(0,1fr))!important}

@@ -357,15 +357,17 @@ async function loadFeed(){
   const {data:posts,error}=await db.from("posts").select("id,author_id,content,image_url,created_at").order("created_at",{ascending:false}).limit(50);
   if(error)throw error;
   if(!posts?.length){root.innerHTML='<div class="feed-empty"><span>✧</span><strong>Bảng tin còn trống</strong><small>Hãy là người đầu tiên chia sẻ điều thú vị hôm nay.</small></div>';return}
-  const ids=[...new Set(posts.map(p=>p.author_id))],postIds=posts.map(p=>p.id);
-  const [profilesRes,reactionsRes,commentsRes]=await Promise.all([
-   db.from("profiles").select("id,display_name,avatar_url").in("id",ids),
+  const postIds=posts.map(p=>p.id);
+  const [reactionsRes,commentsRes]=await Promise.all([
    db.from("post_reactions").select("post_id,user_id,reaction").in("post_id",postIds),
    db.from("post_comments").select("id,post_id,author_id,content,created_at").in("post_id",postIds).order("created_at",{ascending:true})
   ]);
-  if(profilesRes.error)throw profilesRes.error;if(reactionsRes.error)throw reactionsRes.error;if(commentsRes.error)throw commentsRes.error;
-  const profiles=new Map((profilesRes.data||[]).map(p=>[p.id,p])),reactions=reactionsRes.data||[],comments=commentsRes.data||[];
-  window.__lumioProfileNames=new Map((profilesRes.data||[]).map(p=>[p.id,p.display_name||"Lumio Member"]));
+  if(reactionsRes.error)throw reactionsRes.error;if(commentsRes.error)throw commentsRes.error;
+  const comments=commentsRes.data||[],ids=[...new Set([...posts.map(p=>p.author_id),...comments.map(c=>c.author_id)])];
+  const {data:profileRows,error:profilesError}=await db.from("profiles").select("id,display_name,avatar_url").in("id",ids);
+  if(profilesError)throw profilesError;
+  const profiles=new Map((profileRows||[]).map(p=>[p.id,p])),reactions=reactionsRes.data||[];
+  window.__lumioProfileNames=new Map((profileRows||[]).map(p=>[p.id,p.display_name||"Lumio Member"]));
   root.innerHTML="";
   posts.forEach(post=>renderPostCard(post,profiles.get(post.author_id)||{},reactions.filter(x=>x.post_id===post.id),comments.filter(x=>x.post_id===post.id),root));
  }catch(error){root.innerHTML='<p class="notice">Chưa tải được bảng tin: '+escapeText(error.message)+'</p>'}

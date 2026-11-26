@@ -20,7 +20,7 @@ const cfg = window.LUMIO_CONFIG || {};
 const hasBackend = !!(cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY && window.supabase);
 const db = hasBackend ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY) : null;
 let user = null, isLogin = false, demo = false, currentMood = "", profile = null, activeChat = null, messageChannel = null, chatRefreshTimer = null, inboxChannel = null, profileChannel = null, presenceChannel = null, presenceHeartbeat = null;
-let onlineUserIds = new Set(), allPeople = [], peopleFilter = "recommended", peopleSearch = "", feedChannel = null, feedLoading = false, notificationChannel = null;
+let onlineUserIds = new Set(), allPeople = [], peopleFilter = "recommended", peopleSearch = "", feedChannel = null, feedLoading = false, notificationChannel = null, activeRoom = null, roomChannel = null;
 const demoPeople = [
  {id:"demo-1",name:"Mia",age:20,country:"Việt Nam",mood:"Vui vẻ",bio:"Âm nhạc, du lịch và những cuộc trò chuyện thú vị.",initial:"M",color:"pink"},
  {id:"demo-2",name:"Alex",age:23,country:"Singapore",mood:"Khám phá",bio:"Thích game indie, cà phê và khám phá văn hóa.",initial:"A",color:"blue"},
@@ -309,6 +309,74 @@ function renderPersonCard(p,list,isDemo){
  actions.append(pass,like);el.append(top,bio,actions);list.appendChild(el);
 }
 
+function renderRoomMessage(message,authorName){
+ const root=$("roomChatMessages");if(!root)return;
+ const wrap=document.createElement("div");wrap.className="room-message "+(message.sender_id===user?.id?"mine":"theirs");
+ const name=document.createElement("b");name.textContent=message.sender_id===user?.id?"Bạn":authorName||"Thành viên";
+ const body=document.createElement("p");body.textContent=message.body;
+ const time=document.createElement("small");time.textContent=formatMessageTime(message.created_at);
+ wrap.append(name,body,time);root.append(wrap);root.scrollTop=root.scrollHeight;
+}
+async function loadRooms(){
+ const root=$("roomList");if(!root)return;
+ $("roomChatPanel").classList.add("hidden");root.classList.remove("hidden");
+ if(!db||!user){root.innerHTML='<p class="notice">Đăng nhập để tham gia phòng trò chuyện LUMIO.</p>';return}
+ root.innerHTML='<p class="notice">Đang tải các phòng...</p>';
+ const [{data:rooms,error},{data:members}] = await Promise.all([
+  db.from("chat_rooms").select("id,name,description,icon").order("name"),
+  db.from("room_members").select("room_id,user_id")
+ ]);
+ if(error){root.innerHTML='<p class="notice">Không tải được phòng: '+escapeText(error.message)+'</p>';return}
+ const joined=new Set((members||[]).filter(x=>x.user_id===user.id).map(x=>x.room_id));
+ root.innerHTML="";
+ (rooms||[]).forEach(room=>{
+  const card=document.createElement("article");card.className="room";
+  const icon=document.createElement("div");icon.className="room-icon "+(room.id==="chill-music"?"pink":room.id==="global-lounge"?"blue":"gold");icon.textContent=room.icon;
+  const info=document.createElement("div");const title=document.createElement("b");title.textContent=room.name;const desc=document.createElement("small");desc.textContent=room.description;info.append(title,desc);
+  const count=document.createElement("span");count.textContent=(members||[]).filter(x=>x.room_id===room.id).length+" người";
+  const action=document.createElement("button");action.className="primary small";action.type="button";action.textContent=joined.has(room.id)?"Vào phòng":"Tham gia";
+  action.onclick=()=>joined.has(room.id)?openRoom(room):joinRoom(room);
+  card.append(icon,info,count,action);root.append(card);
+ });
+ if(!rooms?.length)root.innerHTML='<p class="notice">Chưa có phòng nào.</p>';
+}
+async function joinRoom(room){
+ const {error}=await db.from("room_members").insert({room_id:room.id,user_id:user.id});
+ if(error&&error.code!=="23505"){toast("Chưa tham gia được phòng: "+error.message);return}
+ await openRoom(room);
+}
+async function openRoom(room){
+ activeRoom=room;
+ $("roomList").classList.add("hidden");$("roomChatPanel").classList.remove("hidden");
+ $("roomChatTitle").textContent=room.name;$("roomChatSubtitle").textContent=room.description;
+ $("roomChatMessages").innerHTML='<p class="notice">Đang tải tin nhắn...</p>';
+ if(roomChannel){await db.removeChannel(roomChannel);roomChannel=null}
+ const {data,error}=await db.from("room_messages").select("id,room_id,sender_id,body,created_at").eq("room_id",room.id).order("created_at",{ascending:true}).limit(100);
+ const root=$("roomChatMessages");root.innerHTML="";
+ if(error){root.textContent="Không tải được tin nhắn: "+error.message;return}
+ const ids=[...new Set((data||[]).map(x=>x.sender_id))];
+ const {data:profiles}=ids.length?await db.from("profiles").select("id,display_name").in("id",ids):{data:[]};
+ const names=new Map((profiles||[]).map(x=>[x.id,x.display_name]));
+ (data||[]).forEach(m=>renderRoomMessage(m,names.get(m.sender_id)));
+ if(!data?.length)root.innerHTML='<p class="notice">Phòng vừa mở cửa! Hãy gửi lời chào đầu tiên.</p>';
+ roomChannel=db.channel("lumio-room-"+room.id).on("postgres_changes",{event:"INSERT",schema:"public",table:"room_messages",filter:"room_id=eq."+room.id},async payload=>{
+  if(payload.new.sender_id===user.id)return;
+  const {data:p}=await db.from("profiles").select("display_name").eq("id",payload.new.sender_id).maybeSingle();
+  renderRoomMessage(payload.new,p?.display_name);
+ }).subscribe();
+}
+async function sendRoomMessage(event){
+ event.preventDefault();if(!activeRoom||!user)return;
+ const input=$("roomChatInput"),body=input.value.trim();if(!body)return;
+ $("sendRoomMessage").disabled=true;
+ const {error}=await db.from("room_messages").insert({room_id:activeRoom.id,sender_id:user.id,body});
+ $("sendRoomMessage").disabled=false;
+ if(error){toast("Chưa gửi được tin nhắn: "+error.message);return}
+ input.value="";
+ const {data:p}=await db.from("profiles").select("display_name").eq("id",user.id).maybeSingle();
+ const {data:latest}=await db.from("room_messages").select("id,room_id,sender_id,body,created_at").eq("room_id",activeRoom.id).eq("sender_id",user.id).order("created_at",{ascending:false}).limit(1);
+ if(latest?.[0])renderRoomMessage(latest[0],p?.display_name);
+}
 async function loadMatches(){
  const root=$("messagesList"); if(!root)return;
  if(!db||!user){root.textContent="Đăng nhập để xem các kết nối thật.";return}
@@ -487,6 +555,7 @@ function switchTab(tab){
  if(more){more.classList.remove("active");more.setAttribute("aria-expanded","false")}
  if(tab==="feed")loadFeed();
  if(tab==="notifications")loadNotifications();
+ if(tab==="rooms")loadRooms();
 }
 function toggleMoreNav(force){
  const menu=$("moreNavMenu"),button=$("moreNavButton");if(!menu||!button)return;
@@ -499,6 +568,9 @@ document.addEventListener("click",e=>{if(!$("moreNavMenu")?.contains(e.target)&&
 $("refreshFeed").onclick=()=>loadFeed();$("markAllNotificationsRead").onclick=markAllNotificationsRead;$("postComposer").onsubmit=publishPost;$("postImage").onchange=e=>setPostImagePreview(e.target.files?.[0]||null);
 $("refreshPeople").onclick=()=>renderPeople();
 $("openMessages").onclick=()=>{switchTab("messages");loadMatches()};
+$("refreshRooms").onclick=loadRooms;
+$("leaveRoomChat").onclick=async()=>{if(roomChannel){await db.removeChannel(roomChannel);roomChannel=null}activeRoom=null;loadRooms()};
+$("roomChatForm").onsubmit=sendRoomMessage;
 $("closeChat").onclick=()=>{$("chatPanel").classList.add("hidden");$("messagesList").classList.remove("hidden");activeChat=null;if(chatRefreshTimer){clearInterval(chatRefreshTimer);chatRefreshTimer=null}if(messageChannel){db.removeChannel(messageChannel);messageChannel=null}};
 $("chatForm").onsubmit=sendChatMessage;
 $("startButton").onclick=()=>openAuth(false);

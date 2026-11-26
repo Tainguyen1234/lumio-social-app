@@ -868,3 +868,11 @@ html[data-theme="dark"] .room-emoji-toggle{background:#ffffff0b;border-color:#ff
 #view-rooms.room-chat-active #roomChatForm #roomChatInput{order:2;flex:1 1 0;min-width:0}
 #view-rooms.room-chat-active #roomChatForm #sendRoomMessage{order:3;flex:0 0 auto}
 #view-rooms.room-chat-active #roomChatMessages{flex:1 1 0!important;min-height:24px!important}
+
+
+/* Clean room composer: custom emoji toolbar removed */
+#view-rooms.room-chat-active #roomChatForm{
+ display:flex;flex-wrap:nowrap;align-items:center;gap:8px;
+}
+#view-rooms.room-chat-active #roomChatForm #roomChatInput{flex:1 1 0;min-width:0}
+#view-rooms.room-chat-active #roomChatForm #sendRoomMessage{flex:0 0 auto}

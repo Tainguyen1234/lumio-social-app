@@ -177,7 +177,7 @@ async function uploadAvatar(file){
  }catch(err){loadProfile();say("Tải ảnh thất bại: "+err.message);toast("Chưa tải được ảnh: "+err.message)}
  finally{URL.revokeObjectURL(previewUrl);picker.disabled=false;picker.value=""}
 }
-function normalizeSearch(value){return String(value||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().trim()}
+function normalizeSearch(value){return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim()}
 function renderFilteredPeople(){
  const list=$("people");if(!list)return;
  const query=normalizeSearch(peopleSearch);

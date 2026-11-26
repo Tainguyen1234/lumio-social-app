@@ -66,12 +66,13 @@
         <p class="notice">Bản MVP hiện có trò chơi câu hỏi đơn. Thử thách hai người đồng bộ sẽ được bổ sung khi phần chat và realtime được cấu hình.</p>
       </section>
       <section id="view-rooms" class="view hidden">
-        <div class="section-head"><div><h3>Vibe Rooms</h3><p>Chọn chủ đề bạn muốn tham gia</p></div></div>
-        <div class="room-list">
-          <article class="room"><div class="room-icon pink">♫</div><div><b>Chill & Music</b><small>Âm nhạc · Giao lưu</small></div><span>24 người</span></article>
-          <article class="room"><div class="room-icon blue">◎</div><div><b>Global Lounge</b><small>Ngôn ngữ · Văn hóa</small></div><span>18 người</span></article>
-          <article class="room"><div class="room-icon gold">◇</div><div><b>Game Zone</b><small>Mini game · Thử thách</small></div><span>12 người</span></article>
-        </div><p class="notice">Danh sách phòng hiện là nội dung mẫu. Phòng thoại trực tiếp cần tích hợp dịch vụ voice/WebRTC ở giai đoạn tiếp theo.</p>
+        <div class="section-head"><div><h3>Vibe Rooms</h3><p>Tham gia phòng trò chuyện theo sở thích</p></div><button id="refreshRooms" class="secondary small" type="button">↻ Làm mới</button></div>
+        <div id="roomList" class="room-list"><p class="notice">Đăng nhập để khám phá các phòng LUMIO.</p></div>
+        <div id="roomChatPanel" class="room-chat-panel hidden">
+          <div class="room-chat-head"><button id="leaveRoomChat" class="secondary small" type="button">← Phòng</button><div><b id="roomChatTitle">Phòng trò chuyện</b><small id="roomChatSubtitle">Trao đổi cùng cộng đồng</small></div></div>
+          <div id="roomChatMessages" class="room-chat-messages" aria-live="polite"></div>
+          <form id="roomChatForm" class="chat-form"><input id="roomChatInput" maxlength="1000" placeholder="Viết tin nhắn trong phòng..." autocomplete="off" aria-label="Tin nhắn trong phòng"><button class="primary small" id="sendRoomMessage" type="submit">Gửi</button></form>
+        </div>
       </section>
       <section id="view-profile" class="view hidden">
         <div class="section-head"><div><h3>Hồ sơ của tôi</h3><p>Giới thiệu một chút về bạn</p></div></div>

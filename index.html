@@ -7,7 +7,7 @@
   <title>LUMIO — Connect • Play • Vibe</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=rooms-android-fix-3">
+  <link rel="stylesheet" href="styles.css?v=rooms-emoji-4">
   <script>try{document.documentElement.dataset.theme=localStorage.getItem("lumio-theme")==="dark"?"dark":"light"}catch(e){document.documentElement.dataset.theme="light"}</script>
 </head>
 <body>
@@ -72,7 +72,7 @@
           <div class="room-chat-head"><button id="leaveRoomChat" class="secondary small" type="button">← Phòng</button><div><b id="roomChatTitle">Phòng trò chuyện</b><small id="roomChatSubtitle">Trao đổi cùng cộng đồng</small></div></div>
           <div id="roomChatMembers" class="room-chat-members" aria-label="Thành viên trong phòng"></div>
           <div id="roomChatMessages" class="room-chat-messages" aria-live="polite"></div>
-          <form id="roomChatForm" class="chat-form"><input id="roomChatInput" maxlength="1000" placeholder="Viết tin nhắn trong phòng..." autocomplete="off" aria-label="Tin nhắn trong phòng"><button class="primary small" id="sendRoomMessage" type="submit">Gửi</button></form>
+          <div id="roomEmojiBar" class="room-emoji-bar" aria-label="Biểu tượng cảm xúc"><button type="button" data-emoji="😊" aria-label="Cười">😊</button><button type="button" data-emoji="😂" aria-label="Cười lớn">😂</button><button type="button" data-emoji="❤️" aria-label="Yêu thích">❤️</button><button type="button" data-emoji="👍" aria-label="Thích">👍</button><button type="button" data-emoji="🔥" aria-label="Tuyệt vời">🔥</button><button type="button" data-emoji="🎉" aria-label="Chúc mừng">🎉</button><button type="button" data-emoji="✨" aria-label="Lấp lánh">✨</button></div><form id="roomChatForm" class="chat-form"><input id="roomChatInput" maxlength="1000" placeholder="Viết tin nhắn trong phòng..." autocomplete="off" aria-label="Tin nhắn trong phòng"><button class="primary small" id="sendRoomMessage" type="submit">Gửi</button></form>
         </div>
       </section>
       <section id="view-profile" class="view hidden">
@@ -91,5 +91,5 @@
 <button id="resendConfirmation" class="secondary full hidden" type="button">Gửi lại email xác nhận</button></form><button id="switchAuth" class="text-button">Đã có tài khoản? Đăng nhập</button><p id="authMessage" class="form-message"></p></div></div>
   <div id="toast" class="toast hidden"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2'"></script>
-  <script src="config.js?v=notifications-1"></script><script src="app.js?v=rooms-android-fix-3"></script>
+  <script src="config.js?v=notifications-1"></script><script src="app.js?v=rooms-emoji-4"></script>
 </body></html>

@@ -7,7 +7,7 @@
   <title>LUMIO — Connect • Play • Vibe</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=feed-2">
+  <link rel="stylesheet" href="styles.css?v=notifications-1">
   <script>try{document.documentElement.dataset.theme=localStorage.getItem("lumio-theme")==="dark"?"dark":"light"}catch(e){document.documentElement.dataset.theme="light"}</script>
 </head>
 <body>
@@ -29,12 +29,17 @@
         <button class="tab" data-tab="mood">✧<span>Tâm trạng</span></button>
         <button class="tab" data-tab="play">◈<span>Trò chơi</span></button>
         <button class="tab" data-tab="rooms">◉<span>Phòng</span></button>
+        <button class="tab" data-tab="notifications">♧<span>Thông báo</span><i id="notificationUnreadCount" class="unread-count hidden" aria-live="polite"></i></button>
         <button class="tab" data-tab="profile">♙<span>Cá nhân</span></button><button id="openMessages" class="tab" data-tab="messages" aria-label="Tin nhắn">♡<span>Tin nhắn</span><i id="messageUnreadCount" class="unread-count hidden" aria-live="polite"></i></button>
       </nav>
       <section id="view-feed" class="view">
         <div class="section-head"><div><h3>Bảng tin cộng đồng</h3><p>Chia sẻ khoảnh khắc và kết nối cùng LUMIO</p></div><button id="refreshFeed" class="secondary small" type="button">↻ Làm mới</button></div>
         <form id="postComposer" class="post-composer"><div class="composer-top"><div class="avatar composer-avatar" id="composerAvatar">L</div><textarea id="postContent" maxlength="2000" placeholder="Bạn đang nghĩ gì? Chia sẻ với cộng đồng LUMIO..." aria-label="Nội dung bài viết"></textarea></div><div id="postImagePreview" class="post-image-preview hidden"></div><div class="composer-actions"><label class="attach-image" for="postImage">▧ Ảnh</label><input id="postImage" type="file" accept="image/jpeg,image/png,image/webp" hidden><span id="postImageStatus" aria-live="polite">Tối đa 8 MB · JPG, PNG, WebP</span><button id="publishPost" class="primary small" type="submit">Đăng bài ↗</button></div></form>
         <div id="feedPosts" class="feed-posts" aria-live="polite"><p class="notice">Đăng nhập để xem bảng tin cộng đồng.</p></div>
+      </section>
+      <section id="view-notifications" class="view hidden">
+        <div class="section-head"><div><h3>Thông báo</h3><p>Cập nhật những tương tác mới với bạn</p></div><button id="markAllNotificationsRead" class="secondary small" type="button">Đọc tất cả</button></div>
+        <div id="notificationsList" class="notifications-list"><p class="notice">Đăng nhập để xem thông báo.</p></div>
       </section>
       <section id="view-discover" class="view hidden">
         <div class="section-head"><div><h3>Khám phá cộng đồng</h3><p>Những người có thể hợp vibe với bạn</p></div><button id="refreshPeople" class="secondary small" type="button">↻ Làm mới</button></div>
@@ -79,5 +84,5 @@
 <button id="resendConfirmation" class="secondary full hidden" type="button">Gửi lại email xác nhận</button></form><button id="switchAuth" class="text-button">Đã có tài khoản? Đăng nhập</button><p id="authMessage" class="form-message"></p></div></div>
   <div id="toast" class="toast hidden"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2'"></script>
-  <script src="config.js?v=feed-2"></script><script src="app.js?v=feed-2"></script>
+  <script src="config.js?v=notifications-1"></script><script src="app.js?v=notifications-1"></script>
 </body></html>

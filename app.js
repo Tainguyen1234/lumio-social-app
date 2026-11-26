@@ -56,7 +56,8 @@ function renderPersonCard(p,list,isDemo){
  actions.append(pass,like);el.append(top,bio,actions);list.appendChild(el);
 }
 function switchTab(tab){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));$("view-"+tab).classList.remove("hidden")}
-document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));\n$("refreshPeople").onclick=()=>renderPeople();
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
+$("refreshPeople").onclick=()=>renderPeople();
 $("startButton").onclick=()=>openAuth(false);
 $("demoButton").onclick=()=>{demo=true;user=null;showApp();toast("Bạn đang trải nghiệm chế độ demo")};
 $("authButton").onclick=()=>user?switchTab("profile"):openAuth(true);

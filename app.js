@@ -587,12 +587,22 @@ $("openMessages").onclick=()=>{switchTab("messages");loadMatches()};
 $("refreshRooms").onclick=loadRooms;
 $("leaveRoomChat").onclick=async()=>{if(roomChannel){await db.removeChannel(roomChannel);roomChannel=null}activeRoom=null;$("view-rooms").classList.remove("room-chat-active");$("app").classList.remove("room-focus-active");loadRooms()};
 $("roomChatForm").onsubmit=sendRoomMessage;
-$("roomEmojiBar").addEventListener("click",e=>{
+const emojiBar=$("roomEmojiBar"),emojiToggle=$("toggleRoomEmoji");
+emojiToggle.onclick=()=>{
+ const opening=emojiBar.classList.contains("hidden");
+ emojiBar.classList.toggle("hidden",!opening);
+ emojiToggle.setAttribute("aria-expanded",String(opening));
+ emojiToggle.setAttribute("aria-label",opening?"Đóng biểu tượng cảm xúc":"Mở biểu tượng cảm xúc");
+ emojiToggle.classList.toggle("active",opening);
+};
+emojiBar.addEventListener("click",e=>{
  const button=e.target.closest("button[data-emoji]");if(!button)return;
  const input=$("roomChatInput"),emoji=button.dataset.emoji;
  const start=input.selectionStart??input.value.length,end=input.selectionEnd??input.value.length;
  input.value=input.value.slice(0,start)+emoji+input.value.slice(end);
  const cursor=start+emoji.length;input.focus();input.setSelectionRange(cursor,cursor);
+ emojiBar.classList.add("hidden");emojiToggle.setAttribute("aria-expanded","false");
+ emojiToggle.setAttribute("aria-label","Mở biểu tượng cảm xúc");emojiToggle.classList.remove("active");
 });
 $("closeChat").onclick=()=>{$("chatPanel").classList.add("hidden");$("messagesList").classList.remove("hidden");activeChat=null;if(chatRefreshTimer){clearInterval(chatRefreshTimer);chatRefreshTimer=null}if(messageChannel){db.removeChannel(messageChannel);messageChannel=null}};
 $("chatForm").onsubmit=sendChatMessage;

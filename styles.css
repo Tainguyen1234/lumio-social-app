@@ -80,3 +80,11 @@
  #profileForm .avatar-editor .avatar-preview{width:68px;height:68px;min-width:68px;flex-basis:68px}
  #view-messages .chat-messages .chat-bubble{max-width:82%;min-width:72px}
 }
+
+#view-messages .chat-messages .chat-message{display:flex;flex:0 0 auto;flex-direction:column;gap:4px;width:max-content;max-width:82%;min-width:0}
+#view-messages .chat-messages .chat-message.mine{align-self:flex-end;align-items:flex-end;margin-left:auto}
+#view-messages .chat-messages .chat-message.theirs{align-self:flex-start;align-items:flex-start;margin-right:auto}
+#view-messages .chat-messages .chat-bubble{display:block;box-sizing:border-box;width:100%;min-width:72px;max-width:100%;padding:12px 15px;white-space:pre-wrap;word-break:normal;overflow-wrap:anywhere;font-size:14px;line-height:1.55}
+
+.avatar-editor-actions #avatarStatus{display:block;max-width:240px;color:#c9a9ef;font-size:10px;line-height:1.5}
+#view-messages .chat-messages .chat-message .message-meta{display:block;min-width:48px;text-align:center}

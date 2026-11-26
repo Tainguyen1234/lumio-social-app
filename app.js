@@ -20,7 +20,7 @@ const cfg = window.LUMIO_CONFIG || {};
 const hasBackend = !!(cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY && window.supabase);
 const db = hasBackend ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY) : null;
 let user = null, isLogin = false, demo = false, currentMood = "", profile = null, activeChat = null, messageChannel = null, chatRefreshTimer = null, inboxChannel = null, profileChannel = null, presenceChannel = null, presenceHeartbeat = null;
-let onlineUserIds = new Set(), allPeople = [], peopleFilter = "recommended", peopleSearch = "";
+let onlineUserIds = new Set(), allPeople = [], peopleFilter = "recommended", peopleSearch = "", feedChannel = null, feedLoading = false;
 const demoPeople = [
  {id:"demo-1",name:"Mia",age:20,country:"Việt Nam",mood:"Vui vẻ",bio:"Âm nhạc, du lịch và những cuộc trò chuyện thú vị.",initial:"M",color:"pink"},
  {id:"demo-2",name:"Alex",age:23,country:"Singapore",mood:"Khám phá",bio:"Thích game indie, cà phê và khám phá văn hóa.",initial:"A",color:"blue"},
@@ -127,7 +127,7 @@ function setupProfileRealtime(){
   renderPeople();loadMatches();
  }).subscribe();
 }
-function showApp(){ $("welcome").classList.add("hidden");$("app").classList.remove("hidden");$("authButton").textContent=user?"Tài khoản":"Đăng nhập";loadProfile();syncProfileFromServer();renderPeople();loadMatches();setupInboxRealtime();setupProfileRealtime();setupPresenceRealtime();}
+function showApp(){ $("welcome").classList.add("hidden");$("app").classList.remove("hidden");$("authButton").textContent=user?"Tài khoản":"Đăng nhập";loadProfile();syncProfileFromServer();renderPeople();loadMatches();loadFeed();setupFeedRealtime();setupInboxRealtime();setupProfileRealtime();setupPresenceRealtime();paintAvatar($("composerAvatar"),profile?.avatar_url,profile?.name);}
 function showWelcome(){ $("app").classList.add("hidden");$("welcome").classList.remove("hidden");}
 function openAuth(login=false){isLogin=login;$("authTitle").textContent=login?"Đăng nhập LUMIO":"Tạo tài khoản LUMIO";$("authHint").textContent=login?"Chào mừng bạn quay trở lại.":"Đăng ký để tạo hồ sơ và bắt đầu kết nối."; $("authSubmit").textContent=login?"Đăng nhập":"Tạo tài khoản";$("switchAuth").textContent=login?"Chưa có tài khoản? Đăng ký":"Đã có tài khoản? Đăng nhập";$("authMessage").textContent="";$("authModal").classList.remove("hidden")}
 function closeAuth(){$("authModal").classList.add("hidden")}
@@ -143,7 +143,7 @@ async function syncProfileFromServer(){
  const {data,error}=await db.from("profiles").select("display_name,bio,country,interests,avatar_url").eq("id",user.id).maybeSingle();
  if(error||!data)return;
  const p={...(JSON.parse(localStorage.getItem("lumio_profile")||"{}")),name:data.display_name||"",bio:data.bio||"",country:data.country||"Việt Nam",interests:data.interests||"",avatar_url:data.avatar_url||""};
- profile=p;localStorage.setItem("lumio_profile",JSON.stringify(p));loadProfile();
+ profile=p;localStorage.setItem("lumio_profile",JSON.stringify(p));window.__lumioProfileNames=window.__lumioProfileNames||new Map();window.__lumioProfileNames.set(user.id,p.name||"Lumio Member");loadProfile();
 }
 async function uploadAvatar(file){
  const status=$("avatarStatus");
@@ -316,8 +316,113 @@ async function sendChatMessage(e){
  input.value="";await loadChatMessages();
 }
 
+
+function setPostImagePreview(file){
+ const root=$("postImagePreview");root.innerHTML="";
+ if(!file){root.classList.add("hidden");$("postImageStatus").textContent="Tối đa 8 MB · JPG, PNG, WebP";return}
+ if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>8*1024*1024){$("postImage").value="";$("postImageStatus").textContent="Ảnh không hợp lệ hoặc vượt quá 8 MB.";toast("Chọn ảnh JPG, PNG hoặc WebP tối đa 8 MB.");root.classList.add("hidden");return}
+ const img=document.createElement("img");img.src=URL.createObjectURL(file);img.alt="Xem trước ảnh bài viết";root.append(img);
+ const remove=document.createElement("button");remove.type="button";remove.className="remove-post-image";remove.textContent="×";remove.setAttribute("aria-label","Bỏ ảnh");remove.onclick=()=>{$("postImage").value="";setPostImagePreview(null)};root.append(remove);
+ root.classList.remove("hidden");$("postImageStatus").textContent=file.name;
+}
+async function publishPost(event){
+ event.preventDefault();
+ if(!db||!user){toast("Hãy đăng nhập để đăng bài.");openAuth(true);return}
+ const content=$("postContent").value.trim(),file=$("postImage").files?.[0];
+ if(!content&&!file){toast("Hãy viết nội dung hoặc chọn một ảnh.");return}
+ const button=$("publishPost");button.disabled=true;button.textContent="Đang đăng...";
+ let image_url=null,uploadedPath=null;
+ try{
+  if(file){
+   if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>8*1024*1024)throw new Error("Ảnh phải là JPG, PNG hoặc WebP và tối đa 8 MB.");
+   const ext=file.type==="image/jpeg"?"jpg":file.type==="image/png"?"png":"webp";
+   uploadedPath=user.id+"/"+crypto.randomUUID()+"."+ext;
+   const {error:uploadError}=await db.storage.from("lumio-posts").upload(uploadedPath,file,{contentType:file.type,cacheControl:"3600"});
+   if(uploadError)throw uploadError;
+   image_url=db.storage.from("lumio-posts").getPublicUrl(uploadedPath).data.publicUrl;
+  }
+  const {error}=await db.from("posts").insert({author_id:user.id,content,image_url});
+  if(error)throw error;
+  $("postContent").value="";$("postImage").value="";setPostImagePreview(null);toast("Đã đăng bài lên LUMIO!");await loadFeed();
+ }catch(error){
+  if(uploadedPath)await db.storage.from("lumio-posts").remove([uploadedPath]);
+  toast("Chưa đăng được bài: "+error.message);
+ }finally{button.disabled=false;button.textContent="Đăng bài ↗"}
+}
+async function loadFeed(){
+ const root=$("feedPosts");if(!root||feedLoading)return;
+ if(!db||!user){root.innerHTML='<div class="feed-empty"><span>✦</span><strong>Bảng tin đang chờ bạn</strong><small>Đăng nhập để chia sẻ khoảnh khắc và xem bài viết của cộng đồng.</small><button class="primary small" id="feedLogin" type="button">Đăng nhập</button></div>';$("feedLogin")?.addEventListener("click",()=>openAuth(true));return}
+ feedLoading=true;root.innerHTML='<p class="notice">Đang tải bảng tin...</p>';
+ try{
+  const {data:posts,error}=await db.from("posts").select("id,author_id,content,image_url,created_at").order("created_at",{ascending:false}).limit(50);
+  if(error)throw error;
+  if(!posts?.length){root.innerHTML='<div class="feed-empty"><span>✧</span><strong>Bảng tin còn trống</strong><small>Hãy là người đầu tiên chia sẻ điều thú vị hôm nay.</small></div>';return}
+  const ids=[...new Set(posts.map(p=>p.author_id))],postIds=posts.map(p=>p.id);
+  const [profilesRes,reactionsRes,commentsRes]=await Promise.all([
+   db.from("profiles").select("id,display_name,avatar_url").in("id",ids),
+   db.from("post_reactions").select("post_id,user_id,reaction").in("post_id",postIds),
+   db.from("post_comments").select("id,post_id,author_id,content,created_at").in("post_id",postIds).order("created_at",{ascending:true})
+  ]);
+  if(profilesRes.error)throw profilesRes.error;if(reactionsRes.error)throw reactionsRes.error;if(commentsRes.error)throw commentsRes.error;
+  const profiles=new Map((profilesRes.data||[]).map(p=>[p.id,p])),reactions=reactionsRes.data||[],comments=commentsRes.data||[];
+  window.__lumioProfileNames=new Map((profilesRes.data||[]).map(p=>[p.id,p.display_name||"Lumio Member"]));
+  root.innerHTML="";
+  posts.forEach(post=>renderPostCard(post,profiles.get(post.author_id)||{},reactions.filter(x=>x.post_id===post.id),comments.filter(x=>x.post_id===post.id),root));
+ }catch(error){root.innerHTML='<p class="notice">Chưa tải được bảng tin: '+escapeText(error.message)+'</p>'}
+ finally{feedLoading=false}
+}
+function renderPostCard(post,author,reactions,comments,root){
+ const card=document.createElement("article");card.className="feed-post";
+ const head=document.createElement("div");head.className="feed-post-head";
+ const avatar=document.createElement("div");avatar.className="avatar feed-avatar";paintAvatar(avatar,author.avatar_url,author.display_name||"L");
+ const identity=document.createElement("div");identity.className="feed-identity";
+ const name=document.createElement("strong");name.textContent=author.display_name||"Lumio Member";
+ const time=document.createElement("small");time.textContent=formatPostTime(post.created_at);
+ identity.append(name,time);head.append(avatar,identity);
+ if(post.author_id===user?.id){const del=document.createElement("button");del.className="post-delete";del.type="button";del.textContent="•••";del.setAttribute("aria-label","Tùy chọn bài viết");del.onclick=()=>{if(confirm("Bạn muốn xóa bài viết này?"))deletePost(post.id,post.image_url)};head.append(del)}
+ card.append(head);
+ if(post.content){const body=document.createElement("p");body.className="feed-post-content";body.textContent=post.content;card.append(body)}
+ if(post.image_url){const image=document.createElement("img");image.className="feed-post-image";image.src=post.image_url;image.alt="Ảnh trong bài viết";image.loading="lazy";card.append(image)}
+ const mine=reactions.some(x=>x.user_id===user?.id),stats=document.createElement("div");stats.className="feed-post-stats";stats.textContent=reactions.length+" lượt cảm xúc · "+comments.length+" bình luận";card.append(stats);
+ const actions=document.createElement("div");actions.className="feed-post-actions";
+ const like=document.createElement("button");like.type="button";like.className="feed-action"+(mine?" liked":"");like.textContent=(mine?"♥ Đã thích":"♡ Thích")+" · "+reactions.length;like.onclick=()=>togglePostReaction(post.id,mine);
+ const commentToggle=document.createElement("button");commentToggle.type="button";commentToggle.className="feed-action";commentToggle.textContent="▢ Bình luận · "+comments.length;
+ actions.append(like,commentToggle);card.append(actions);
+ const commentsBox=document.createElement("div");commentsBox.className="post-comments hidden";
+ comments.forEach(comment=>{const row=document.createElement("div");row.className="post-comment";const who=document.createElement("strong");who.textContent=profilesNameForComment(comment.author_id);const msg=document.createElement("span");msg.textContent=comment.content;row.append(who,msg);commentsBox.append(row)});
+ const form=document.createElement("form");form.className="post-comment-form";const input=document.createElement("input");input.maxLength=1000;input.placeholder="Viết bình luận...";input.required=true;const send=document.createElement("button");send.type="submit";send.className="primary small";send.textContent="Gửi";form.append(input,send);form.onsubmit=async e=>{e.preventDefault();await addPostComment(post.id,input.value.trim(),send)};commentsBox.append(form);
+ commentToggle.onclick=()=>{commentsBox.classList.toggle("hidden");if(!commentsBox.classList.contains("hidden"))input.focus()};
+ card.append(commentsBox);root.append(card);
+}
+function profilesNameForComment(id){return window.__lumioProfileNames?.get(id)||"Thành viên"}
+function formatPostTime(value){const date=new Date(value);if(!Number.isFinite(date.getTime()))return "";return new Intl.DateTimeFormat("vi-VN",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}).format(date)}
+async function togglePostReaction(postId,alreadyLiked){
+ if(!db||!user)return;
+ const query=db.from("post_reactions");
+ const result=alreadyLiked?await query.delete().eq("post_id",postId).eq("user_id",user.id):await query.insert({post_id:postId,user_id:user.id,reaction:"like"});
+ if(result.error){toast("Chưa cập nhật được cảm xúc: "+result.error.message);return}await loadFeed();
+}
+async function addPostComment(postId,content,button){
+ if(!content||!db||!user)return;button.disabled=true;
+ const {error}=await db.from("post_comments").insert({post_id:postId,author_id:user.id,content});
+ button.disabled=false;if(error){toast("Chưa gửi được bình luận: "+error.message);return}toast("Đã gửi bình luận");await loadFeed();
+}
+async function deletePost(postId,imageUrl){
+ if(!db||!user)return;
+ const {error}=await db.from("posts").delete().eq("id",postId).eq("author_id",user.id);
+ if(error){toast("Chưa xóa được bài viết: "+error.message);return}
+ if(imageUrl){try{const url=new URL(imageUrl),marker="/storage/v1/object/public/lumio-posts/";const index=url.pathname.indexOf(marker);if(index>=0){const path=decodeURIComponent(url.pathname.slice(index+marker.length));await db.storage.from("lumio-posts").remove([path])}}catch(e){console.warn("Post image cleanup failed",e)}}
+ toast("Đã xóa bài viết");await loadFeed();
+}
+function setupFeedRealtime(){
+ if(!db||!user)return;
+ if(feedChannel)db.removeChannel(feedChannel);
+ feedChannel=db.channel("lumio-social-feed").on("postgres_changes",{event:"*",schema:"public",table:"posts"},()=>loadFeed()).on("postgres_changes",{event:"*",schema:"public",table:"post_comments"},()=>loadFeed()).on("postgres_changes",{event:"*",schema:"public",table:"post_reactions"},()=>loadFeed()).subscribe();
+}
+
 function switchTab(tab){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));$("view-"+tab).classList.remove("hidden")}
-document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{switchTab(b.dataset.tab);if(b.dataset.tab==="feed")loadFeed()}));
+$("refreshFeed").onclick=()=>loadFeed();$("postComposer").onsubmit=publishPost;$("postImage").onchange=e=>setPostImagePreview(e.target.files?.[0]||null);
 $("refreshPeople").onclick=()=>renderPeople();
 $("openMessages").onclick=()=>{switchTab("messages");loadMatches()};
 $("closeChat").onclick=()=>{$("chatPanel").classList.add("hidden");$("messagesList").classList.remove("hidden");activeChat=null;if(chatRefreshTimer){clearInterval(chatRefreshTimer);chatRefreshTimer=null}if(messageChannel){db.removeChannel(messageChannel);messageChannel=null}};
@@ -332,7 +437,7 @@ $("resendConfirmation").onclick=async()=>{const email=$("email").value.trim();if
 $("authForm").onsubmit=async e=>{e.preventDefault();const email=$("email").value.trim(),password=$("password").value; if(!db){$("authMessage").textContent="Chưa kết nối Supabase. Hãy dùng bản demo hoặc cấu hình backend theo README.";return} $("authSubmit").disabled=true;try{const res=isLogin?await db.auth.signInWithPassword({email,password}):await db.auth.signUp({email,password,options:{emailRedirectTo:new URL("./",window.location.href).href}});if(res.error)throw res.error;if(!isLogin&&!res.data.session){$("authMessage").textContent="Đã gửi email xác nhận. Hãy mở Gmail để xác nhận."; $("resendConfirmation").classList.remove("hidden"); return}user=res.data.user;demo=false;closeAuth();showApp();toast("Đăng nhập thành công")}catch(err){$("authMessage").textContent=err.message||"Có lỗi xảy ra"}finally{$("authSubmit").disabled=false}};
 $("profileForm").onsubmit=async e=>{e.preventDefault();const p={...(profile||{}),name:$("displayName").value.trim(),bio:$("bio").value.trim(),country:$("country").value.trim(),interests:$("interests").value.trim()};localStorage.setItem("lumio_profile",JSON.stringify(p));profile=p;if(db&&user){const {error}=await db.from("profiles").upsert({id:user.id,display_name:p.name,bio:p.bio,country:p.country,interests:p.interests,avatar_url:p.avatar_url||null,updated_at:new Date().toISOString()});if(error){toast("Đã lưu trên thiết bị; đồng bộ lỗi: "+error.message);return}}loadProfile();toast("Đã lưu hồ sơ")}
 $("avatarFile").onchange=e=>{const file=e.target.files?.[0];if(file)uploadAvatar(file)};
-$("logoutButton").onclick=async()=>{await saveLastSeen();if(presenceChannel){await presenceChannel.untrack();db.removeChannel(presenceChannel);presenceChannel=null}if(presenceHeartbeat){clearInterval(presenceHeartbeat);presenceHeartbeat=null}onlineUserIds.clear();if(inboxChannel){db.removeChannel(inboxChannel);inboxChannel=null}if(profileChannel){db.removeChannel(profileChannel);profileChannel=null}if(db&&user)await db.auth.signOut();user=null;demo=false;showWelcome();toast("Bạn đã đăng xuất")};
+$("logoutButton").onclick=async()=>{await saveLastSeen();if(presenceChannel){await presenceChannel.untrack();db.removeChannel(presenceChannel);presenceChannel=null}if(presenceHeartbeat){clearInterval(presenceHeartbeat);presenceHeartbeat=null}onlineUserIds.clear();if(inboxChannel){db.removeChannel(inboxChannel);inboxChannel=null}if(profileChannel){db.removeChannel(profileChannel);profileChannel=null}if(feedChannel){db.removeChannel(feedChannel);feedChannel=null}if(db&&user)await db.auth.signOut();user=null;demo=false;showWelcome();toast("Bạn đã đăng xuất")};
 $("peopleSearch")?.addEventListener("input",e=>{peopleSearch=e.target.value;updatePeopleFilterUI();renderFilteredPeople()});
 $("clearPeopleSearch")?.addEventListener("click",()=>{$("peopleSearch").value="";peopleSearch="";updatePeopleFilterUI();renderFilteredPeople();$("peopleSearch").focus()});
 document.querySelectorAll("#peopleFilters .chip").forEach(button=>button.addEventListener("click",()=>{peopleFilter=button.dataset.peopleFilter;updatePeopleFilterUI();renderFilteredPeople()}));

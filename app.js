@@ -448,5 +448,5 @@ $("nextQuestion").onclick=()=>{$("question").textContent=questions[++qIndex%ques
 if(db){db.auth.getSession().then(({data})=>{if(data.session){user=data.session.user;showApp()}});db.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;if(user)showApp()})}
 document.addEventListener("visibilitychange",async()=>{if(!user||!presenceChannel)return;if(document.hidden){await saveLastSeen();await presenceChannel.untrack()}else{await trackMyPresence();if(activeChat)loadChatMessages()}});
 window.addEventListener("focus",()=>{if(activeChat)loadChatMessages()});
-if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js").catch(()=>{});
+if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js?v=feed-2",{updateViaCache:"none"}).then(reg=>reg.update()).catch(error=>console.warn("Service worker update failed",error));
 })();

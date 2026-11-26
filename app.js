@@ -103,9 +103,10 @@ async function refreshNotificationBadge(){
  if(!db||!user)return;
  const {count,error}=await db.from("notifications").select("id",{count:"exact",head:true}).eq("recipient_id",user.id).is("read_at",null);
  if(error)return;
- const tab=document.querySelector('.tab[data-tab="notifications"]'),badge=$("notificationUnreadCount");
+ const tab=document.querySelector('.more-nav-item[data-tab="notifications"]'),badge=$("notificationUnreadCount"),moreBadge=$("moreUnreadCount");
  if(tab)tab.classList.toggle("has-unread",!!count);
  if(badge){badge.textContent=count>99?"99+":String(count||"");badge.classList.toggle("hidden",!count)}
+ if(moreBadge){moreBadge.textContent=count>99?"99+":String(count||"");moreBadge.classList.toggle("hidden",!count)}
 }
 async function loadNotifications(){
  const root=$("notificationsList");if(!root)return;
@@ -477,8 +478,25 @@ function setupFeedRealtime(){
  feedChannel=db.channel("lumio-social-feed").on("postgres_changes",{event:"*",schema:"public",table:"posts"},()=>loadFeed()).on("postgres_changes",{event:"*",schema:"public",table:"post_comments"},()=>loadFeed()).on("postgres_changes",{event:"*",schema:"public",table:"post_reactions"},()=>loadFeed()).subscribe();
 }
 
-function switchTab(tab){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));$("view-"+tab).classList.remove("hidden")}
-document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{switchTab(b.dataset.tab);if(b.dataset.tab==="feed")loadFeed();if(b.dataset.tab==="notifications")loadNotifications()}));
+function switchTab(tab){
+ document.querySelectorAll(".tab[data-tab]").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+ document.querySelectorAll(".more-nav-item").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+ document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));
+ const view=$("view-"+tab);if(view)view.classList.remove("hidden");
+ const menu=$("moreNavMenu"),more=$("moreNavButton");
+ if(menu)menu.classList.add("hidden");
+ if(more){more.classList.remove("active");more.setAttribute("aria-expanded","false")}
+ if(tab==="feed")loadFeed();
+ if(tab==="notifications")loadNotifications();
+}
+function toggleMoreNav(force){
+ const menu=$("moreNavMenu"),button=$("moreNavButton");if(!menu||!button)return;
+ const open=typeof force==="boolean"?force:menu.classList.contains("hidden");
+ menu.classList.toggle("hidden",!open);button.classList.toggle("active",open);button.setAttribute("aria-expanded",String(open));
+}
+document.querySelectorAll(".tab[data-tab],.more-nav-item").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
+$("moreNavButton").onclick=()=>toggleMoreNav();
+document.addEventListener("click",e=>{if(!$("moreNavMenu")?.contains(e.target)&&!$("moreNavButton")?.contains(e.target))toggleMoreNav(false)});
 $("refreshFeed").onclick=()=>loadFeed();$("markAllNotificationsRead").onclick=markAllNotificationsRead;$("postComposer").onsubmit=publishPost;$("postImage").onchange=e=>setPostImagePreview(e.target.files?.[0]||null);
 $("refreshPeople").onclick=()=>renderPeople();
 $("openMessages").onclick=()=>{switchTab("messages");loadMatches()};
@@ -503,5 +521,5 @@ $("nextQuestion").onclick=()=>{$("question").textContent=questions[++qIndex%ques
 if(db){db.auth.getSession().then(({data})=>{if(data.session){user=data.session.user;showApp()}});db.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;if(user)showApp()})}
 document.addEventListener("visibilitychange",async()=>{if(!user||!presenceChannel)return;if(document.hidden){await saveLastSeen();await presenceChannel.untrack()}else{await trackMyPresence();if(activeChat)loadChatMessages()}});
 window.addEventListener("focus",()=>{if(activeChat)loadChatMessages()});
-if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js?v=notifications-1",{updateViaCache:"none"}).then(reg=>reg.update()).catch(error=>console.warn("Service worker update failed",error));
+if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js?v=bottom-nav-1",{updateViaCache:"none"}).then(reg=>reg.update()).catch(error=>console.warn("Service worker update failed",error));
 })();

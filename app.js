@@ -3,7 +3,7 @@ const $ = id => document.getElementById(id);
 const cfg = window.LUMIO_CONFIG || {};
 const hasBackend = !!(cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY && window.supabase);
 const db = hasBackend ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY) : null;
-let user = null, isLogin = false, demo = false, currentMood = "", profile = null, activeChat = null, messageChannel = null, chatRefreshTimer = null;
+let user = null, isLogin = false, demo = false, currentMood = "", profile = null, activeChat = null, messageChannel = null, chatRefreshTimer = null, inboxChannel = null;
 const demoPeople = [
  {id:"demo-1",name:"Mia",age:20,country:"Việt Nam",mood:"Vui vẻ",bio:"Âm nhạc, du lịch và những cuộc trò chuyện thú vị.",initial:"M",color:"pink"},
  {id:"demo-2",name:"Alex",age:23,country:"Singapore",mood:"Khám phá",bio:"Thích game indie, cà phê và khám phá văn hóa.",initial:"A",color:"blue"},
@@ -12,7 +12,30 @@ const demoPeople = [
 const questions = ["Nếu có thể đi bất cứ đâu cuối tuần này, bạn sẽ chọn nơi nào?","Bài hát nào luôn khiến tâm trạng bạn tốt hơn?","Bạn thích một buổi tối chơi game hay trò chuyện thật lâu?","Nếu có một siêu năng lực trong 24 giờ, bạn chọn gì?","Điều nhỏ bé nào khiến bạn vui hôm nay?"];
 let qIndex=0;
 function toast(msg){const t=$("toast");t.textContent=msg;t.classList.remove("hidden");setTimeout(()=>t.classList.add("hidden"),2600)}
-function showApp(){ $("welcome").classList.add("hidden");$("app").classList.remove("hidden");$("authButton").textContent=user?"Tài khoản":"Đăng nhập";loadProfile();renderPeople();loadMatches();}
+function formatMessageTime(value){if(!value)return "";return new Intl.DateTimeFormat("vi-VN",{hour:"2-digit",minute:"2-digit"}).format(new Date(value))}
+async function refreshUnreadBadge(){
+ if(!db||!user)return;
+ const {count,error}=await db.from("messages").select("id",{count:"exact",head:true}).eq("receiver_id",user.id).is("read_at",null);
+ if(error)return;
+ const tab=document.querySelector('.tab[data-tab="messages"]');
+ if(tab)tab.classList.toggle("has-unread",!!count);
+}
+async function markChatRead(){
+ if(!db||!user||!activeChat)return;
+ const {error}=await db.from("messages").update({read_at:new Date().toISOString()}).eq("sender_id",activeChat.id).eq("receiver_id",user.id).is("read_at",null);
+ if(!error)refreshUnreadBadge();
+}
+function setupInboxRealtime(){
+ if(!db||!user)return;
+ if(inboxChannel)db.removeChannel(inboxChannel);
+ inboxChannel=db.channel("lumio-inbox-"+user.id).on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:"receiver_id=eq."+user.id},payload=>{
+  const m=payload.new;
+  if(activeChat&&activeChat.id===m.sender_id){markChatRead();loadChatMessages();}
+  else {toast("Bạn vừa nhận được tin nhắn mới ✉");refreshUnreadBadge();}
+ }).subscribe();
+ refreshUnreadBadge();
+}
+function showApp(){ $("welcome").classList.add("hidden");$("app").classList.remove("hidden");$("authButton").textContent=user?"Tài khoản":"Đăng nhập";loadProfile();renderPeople();loadMatches();setupInboxRealtime();}
 function showWelcome(){ $("app").classList.add("hidden");$("welcome").classList.remove("hidden");}
 function openAuth(login=false){isLogin=login;$("authTitle").textContent=login?"Đăng nhập LUMIO":"Tạo tài khoản LUMIO";$("authHint").textContent=login?"Chào mừng bạn quay trở lại.":"Đăng ký để tạo hồ sơ và bắt đầu kết nối."; $("authSubmit").textContent=login?"Đăng nhập":"Tạo tài khoản";$("switchAuth").textContent=login?"Chưa có tài khoản? Đăng ký":"Đã có tài khoản? Đăng nhập";$("authMessage").textContent="";$("authModal").classList.remove("hidden")}
 function closeAuth(){$("authModal").classList.add("hidden")}
@@ -102,12 +125,18 @@ async function loadChatMessages(){
  if(!activeChat||!db||!user)return;
  const other=activeChat.id;
  const filter="and(sender_id.eq."+user.id+",receiver_id.eq."+other+"),and(sender_id.eq."+other+",receiver_id.eq."+user.id+")";
- const {data,error}=await db.from("messages").select("id,sender_id,receiver_id,body,created_at").or(filter).order("created_at",{ascending:true}).limit(200);
+ const {data,error}=await db.from("messages").select("id,sender_id,receiver_id,body,created_at,read_at").or(filter).order("created_at",{ascending:true}).limit(200);
  const root=$("chatMessages");if(error){root.textContent="Không tải được tin nhắn: "+error.message;return}
  root.innerHTML="";
  if(!data?.length){root.textContent="Hai bạn đã tương hợp! Hãy gửi lời chào đầu tiên.";return}
- data.forEach(m=>{const bubble=document.createElement("div");bubble.className="chat-bubble "+(m.sender_id===user.id?"mine":"theirs");bubble.textContent=m.body;root.append(bubble)});
+ data.forEach(m=>{
+  const wrap=document.createElement("div");wrap.className="chat-message "+(m.sender_id===user.id?"mine":"theirs");
+  const bubble=document.createElement("div");bubble.className="chat-bubble "+(m.sender_id===user.id?"mine":"theirs");bubble.textContent=m.body;
+  const meta=document.createElement("small");meta.className="message-meta";meta.textContent=formatMessageTime(m.created_at)+(m.sender_id===user.id&&m.read_at?" · Đã xem":"");
+  wrap.append(bubble,meta);root.append(wrap);
+ });
  root.scrollTop=root.scrollHeight;
+ await markChatRead();
 }
 async function sendChatMessage(e){
  e.preventDefault();if(!activeChat||!db||!user)return;
@@ -134,7 +163,7 @@ $("resendConfirmation").onclick=async()=>{const email=$("email").value.trim();if
 
 $("authForm").onsubmit=async e=>{e.preventDefault();const email=$("email").value.trim(),password=$("password").value; if(!db){$("authMessage").textContent="Chưa kết nối Supabase. Hãy dùng bản demo hoặc cấu hình backend theo README.";return} $("authSubmit").disabled=true;try{const res=isLogin?await db.auth.signInWithPassword({email,password}):await db.auth.signUp({email,password,options:{emailRedirectTo:new URL("./",window.location.href).href}});if(res.error)throw res.error;if(!isLogin&&!res.data.session){$("authMessage").textContent="Đã gửi email xác nhận. Hãy mở Gmail để xác nhận."; $("resendConfirmation").classList.remove("hidden"); return}user=res.data.user;demo=false;closeAuth();showApp();toast("Đăng nhập thành công")}catch(err){$("authMessage").textContent=err.message||"Có lỗi xảy ra"}finally{$("authSubmit").disabled=false}};
 $("profileForm").onsubmit=async e=>{e.preventDefault();const p={name:$("displayName").value.trim(),bio:$("bio").value.trim(),country:$("country").value.trim(),interests:$("interests").value.trim()};localStorage.setItem("lumio_profile",JSON.stringify(p));profile=p;if(db&&user){const {error}=await db.from("profiles").upsert({id:user.id,display_name:p.name,bio:p.bio,country:p.country,interests:p.interests,updated_at:new Date().toISOString()});if(error){toast("Đã lưu trên thiết bị; đồng bộ lỗi: "+error.message);return}}loadProfile();toast("Đã lưu hồ sơ")}
-$("logoutButton").onclick=async()=>{if(db&&user)await db.auth.signOut();user=null;demo=false;showWelcome();toast("Bạn đã đăng xuất")};
+$("logoutButton").onclick=async()=>{if(inboxChannel){db.removeChannel(inboxChannel);inboxChannel=null}if(db&&user)await db.auth.signOut();user=null;demo=false;showWelcome();toast("Bạn đã đăng xuất")};
 document.querySelectorAll(".mood").forEach(b=>b.onclick=async()=>{document.querySelectorAll(".mood").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");currentMood=b.dataset.mood;$("moodResult").textContent="Tâm trạng của bạn: "+currentMood+". Hãy khám phá những người cùng tần số!";if(user&&db){const {error}=await db.from("profiles").upsert({id:user.id,display_name:profile?.name||"Lumio Member",mood:currentMood});if(error)toast("Chưa đồng bộ được tâm trạng")}else toast("Đã chọn mood: "+currentMood)});
 $("nextQuestion").onclick=()=>{$("question").textContent=questions[++qIndex%questions.length]};
 if(db){db.auth.getSession().then(({data})=>{if(data.session){user=data.session.user;showApp()}});db.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;if(user)showApp()})}

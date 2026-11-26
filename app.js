@@ -587,6 +587,13 @@ $("openMessages").onclick=()=>{switchTab("messages");loadMatches()};
 $("refreshRooms").onclick=loadRooms;
 $("leaveRoomChat").onclick=async()=>{if(roomChannel){await db.removeChannel(roomChannel);roomChannel=null}activeRoom=null;$("view-rooms").classList.remove("room-chat-active");$("app").classList.remove("room-focus-active");loadRooms()};
 $("roomChatForm").onsubmit=sendRoomMessage;
+$("roomEmojiBar").addEventListener("click",e=>{
+ const button=e.target.closest("button[data-emoji]");if(!button)return;
+ const input=$("roomChatInput"),emoji=button.dataset.emoji;
+ const start=input.selectionStart??input.value.length,end=input.selectionEnd??input.value.length;
+ input.value=input.value.slice(0,start)+emoji+input.value.slice(end);
+ const cursor=start+emoji.length;input.focus();input.setSelectionRange(cursor,cursor);
+});
 $("closeChat").onclick=()=>{$("chatPanel").classList.add("hidden");$("messagesList").classList.remove("hidden");activeChat=null;if(chatRefreshTimer){clearInterval(chatRefreshTimer);chatRefreshTimer=null}if(messageChannel){db.removeChannel(messageChannel);messageChannel=null}};
 $("chatForm").onsubmit=sendChatMessage;
 $("startButton").onclick=()=>openAuth(false);

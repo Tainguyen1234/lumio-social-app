@@ -876,3 +876,9 @@ html[data-theme="dark"] .room-emoji-toggle{background:#ffffff0b;border-color:#ff
 }
 #view-rooms.room-chat-active #roomChatForm #roomChatInput{flex:1 1 0;min-width:0}
 #view-rooms.room-chat-active #roomChatForm #sendRoomMessage{flex:0 0 auto}
+
+
+/* Private chat typing indicator */
+.chat-typing{min-height:22px;padding:2px 14px 5px;color:#9b78ce;font-size:11px;font-weight:700;letter-spacing:.1px}
+.chat-typing.hidden{display:none!important}
+html[data-theme="dark"] .chat-typing{color:#c5a2f5}

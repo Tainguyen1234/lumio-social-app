@@ -42,3 +42,14 @@
  #view-messages .chat-messages{height:calc(100dvh - 330px);min-height:260px;max-height:490px;padding:17px 12px}
  #view-messages .chat-form{padding-left:11px;padding-right:11px}
 }
+
+
+/* Chat timestamps, read receipts and inbox indicator */
+.chat-message{display:flex;flex-direction:column;gap:4px;max-width:100%}
+.chat-message.mine{align-self:flex-end;align-items:flex-end}
+.chat-message.theirs{align-self:flex-start;align-items:flex-start}
+.chat-message .chat-bubble{max-width:min(82vw,340px)}
+.message-meta{padding:0 5px;color:#9385a8;font-size:9px;line-height:1.2}
+.chat-message.mine .message-meta{color:#c8a9eb}
+.tab.has-unread{position:relative}
+.tab.has-unread:after{content:"";position:absolute;top:7px;right:calc(50% - 17px);width:8px;height:8px;border-radius:50%;background:#ff6fba;box-shadow:0 0 0 3px #ff6fba22,0 0 12px #ff6fba}

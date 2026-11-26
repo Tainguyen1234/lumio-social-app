@@ -360,6 +360,7 @@ async function joinRoom(room){
 }
 async function openRoom(room){
  activeRoom=room;
+ $("view-rooms").classList.add("room-chat-active");$("app").classList.add("room-focus-active");
  $("roomList").classList.add("hidden");$("roomChatPanel").classList.remove("hidden");
  $("roomChatTitle").textContent=room.name;$("roomChatSubtitle").textContent=room.description;
  $("roomChatMessages").innerHTML='<p class="notice">Đang tải tin nhắn...</p>';
@@ -563,6 +564,7 @@ function switchTab(tab){
  document.querySelectorAll(".tab[data-tab]").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
  document.querySelectorAll(".more-nav-item").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
  document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));
+ $("view-rooms")?.classList.remove("room-chat-active");$("app")?.classList.remove("room-focus-active");
  const view=$("view-"+tab);if(view)view.classList.remove("hidden");
  const menu=$("moreNavMenu"),more=$("moreNavButton");
  if(menu)menu.classList.add("hidden");
@@ -583,7 +585,7 @@ $("refreshFeed").onclick=()=>loadFeed();$("markAllNotificationsRead").onclick=ma
 $("refreshPeople").onclick=()=>renderPeople();
 $("openMessages").onclick=()=>{switchTab("messages");loadMatches()};
 $("refreshRooms").onclick=loadRooms;
-$("leaveRoomChat").onclick=async()=>{if(roomChannel){await db.removeChannel(roomChannel);roomChannel=null}activeRoom=null;loadRooms()};
+$("leaveRoomChat").onclick=async()=>{if(roomChannel){await db.removeChannel(roomChannel);roomChannel=null}activeRoom=null;$("view-rooms").classList.remove("room-chat-active");$("app").classList.remove("room-focus-active");loadRooms()};
 $("roomChatForm").onsubmit=sendRoomMessage;
 $("closeChat").onclick=()=>{$("chatPanel").classList.add("hidden");$("messagesList").classList.remove("hidden");activeChat=null;if(chatRefreshTimer){clearInterval(chatRefreshTimer);chatRefreshTimer=null}if(messageChannel){db.removeChannel(messageChannel);messageChannel=null}};
 $("chatForm").onsubmit=sendChatMessage;

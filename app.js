@@ -20,7 +20,7 @@ const cfg = window.LUMIO_CONFIG || {};
 const hasBackend = !!(cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY && window.supabase);
 const db = hasBackend ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY) : null;
 let user = null, isLogin = false, demo = false, currentMood = "", profile = null, activeChat = null, messageChannel = null, chatRefreshTimer = null, inboxChannel = null, profileChannel = null, presenceChannel = null, presenceHeartbeat = null;
-let onlineUserIds = new Set(), allPeople = [], peopleFilter = "recommended", peopleSearch = "", feedChannel = null, feedLoading = false;
+let onlineUserIds = new Set(), allPeople = [], peopleFilter = "recommended", peopleSearch = "", feedChannel = null, feedLoading = false, notificationChannel = null;
 const demoPeople = [
  {id:"demo-1",name:"Mia",age:20,country:"Việt Nam",mood:"Vui vẻ",bio:"Âm nhạc, du lịch và những cuộc trò chuyện thú vị.",initial:"M",color:"pink"},
  {id:"demo-2",name:"Alex",age:23,country:"Singapore",mood:"Khám phá",bio:"Thích game indie, cà phê và khám phá văn hóa.",initial:"A",color:"blue"},
@@ -99,6 +99,61 @@ async function refreshUnreadBadge(){
   badge.classList.toggle("hidden",!count);
  }
 }
+async function refreshNotificationBadge(){
+ if(!db||!user)return;
+ const {count,error}=await db.from("notifications").select("id",{count:"exact",head:true}).eq("recipient_id",user.id).is("read_at",null);
+ if(error)return;
+ const tab=document.querySelector('.tab[data-tab="notifications"]'),badge=$("notificationUnreadCount");
+ if(tab)tab.classList.toggle("has-unread",!!count);
+ if(badge){badge.textContent=count>99?"99+":String(count||"");badge.classList.toggle("hidden",!count)}
+}
+async function loadNotifications(){
+ const root=$("notificationsList");if(!root)return;
+ if(!db||!user){root.innerHTML='<div class="feed-empty"><span>♧</span><strong>Thông báo đang chờ bạn</strong><small>Đăng nhập để xem lượt thích, bình luận và kết nối mới.</small></div>';return}
+ root.innerHTML='<p class="notice">Đang tải thông báo...</p>';
+ const {data:items,error}=await db.from("notifications").select("id,actor_id,type,post_id,created_at,read_at").eq("recipient_id",user.id).order("created_at",{ascending:false}).limit(50);
+ if(error){root.innerHTML='<p class="notice">Chưa tải được thông báo: '+escapeText(error.message)+'</p>';return}
+ if(!items?.length){root.innerHTML='<div class="feed-empty"><span>✧</span><strong>Bạn chưa có thông báo mới</strong><small>Khi có người thích, bình luận hoặc kết nối với bạn, thông báo sẽ xuất hiện ở đây.</small></div>';await refreshNotificationBadge();return}
+ const actorIds=[...new Set(items.map(x=>x.actor_id))];
+ const {data:people,error:profileError}=await db.from("profiles").select("id,display_name,avatar_url").in("id",actorIds);
+ if(profileError)console.warn("LUMIO notification profiles failed:",profileError.message);
+ const profiles=new Map((people||[]).map(p=>[p.id,p]));
+ root.innerHTML="";
+ items.forEach(item=>{
+  const actor=profiles.get(item.actor_id)||{},name=actor.display_name||"Một thành viên";
+  const card=document.createElement("button");card.type="button";card.className="notification-item"+(item.read_at?"":" unread");
+  const avatar=document.createElement("span");avatar.className="avatar notification-avatar";paintAvatar(avatar,actor.avatar_url,name);
+  const body=document.createElement("span");body.className="notification-body";
+  const message=document.createElement("strong");
+  message.textContent=item.type==="post_like"?name+" đã thích bài viết của bạn":item.type==="post_comment"?name+" đã bình luận bài viết của bạn":name+" và bạn đã kết nối với nhau";
+  const time=document.createElement("small");time.textContent=formatPostTime(item.created_at);
+  body.append(message,time);const marker=document.createElement("i");marker.className="notification-marker";card.append(avatar,body,marker);
+  card.onclick=()=>openNotification(item);root.append(card);
+ });
+ await refreshNotificationBadge();
+}
+async function openNotification(item){
+ if(!db||!user)return;
+ if(!item.read_at){const {error}=await db.from("notifications").update({read_at:new Date().toISOString()}).eq("id",item.id).eq("recipient_id",user.id).is("read_at",null);if(error)console.warn("LUMIO mark notification read failed:",error.message)}
+ await loadNotifications();
+ if(item.post_id){switchTab("feed");await loadFeed();setTimeout(()=>{const card=document.querySelector('[data-post-id="'+item.post_id+'"]');card?.scrollIntoView({behavior:"smooth",block:"center"})},150)}
+ else if(item.type==="match"){switchTab("messages");loadMatches()}
+}
+async function markAllNotificationsRead(){
+ if(!db||!user)return;
+ const {error}=await db.from("notifications").update({read_at:new Date().toISOString()}).eq("recipient_id",user.id).is("read_at",null);
+ if(error){toast("Chưa cập nhật được thông báo: "+error.message);return}
+ await loadNotifications();toast("Đã đánh dấu tất cả là đã đọc");
+}
+function setupNotificationsRealtime(){
+ if(!db||!user)return;
+ if(notificationChannel)db.removeChannel(notificationChannel);
+ notificationChannel=db.channel("lumio-notifications-"+user.id)
+  .on("postgres_changes",{event:"INSERT",schema:"public",table:"notifications",filter:"recipient_id=eq."+user.id},()=>{
+   loadNotifications();refreshNotificationBadge();toast("Bạn có thông báo mới ♧");
+  }).subscribe();
+ loadNotifications();refreshNotificationBadge();
+}
 async function markChatRead(){
  if(!db||!user||!activeChat)return;
  const {error}=await db.from("messages").update({read_at:new Date().toISOString()}).eq("sender_id",activeChat.id).eq("receiver_id",user.id).is("read_at",null);
@@ -127,7 +182,7 @@ function setupProfileRealtime(){
   renderPeople();loadMatches();
  }).subscribe();
 }
-function showApp(){ $("welcome").classList.add("hidden");$("app").classList.remove("hidden");$("authButton").textContent=user?"Tài khoản":"Đăng nhập";loadProfile();syncProfileFromServer();renderPeople();loadMatches();loadFeed();setupFeedRealtime();setupInboxRealtime();setupProfileRealtime();setupPresenceRealtime();paintAvatar($("composerAvatar"),profile?.avatar_url,profile?.name);}
+function showApp(){ $("welcome").classList.add("hidden");$("app").classList.remove("hidden");$("authButton").textContent=user?"Tài khoản":"Đăng nhập";loadProfile();syncProfileFromServer();renderPeople();loadMatches();loadFeed();setupFeedRealtime();setupInboxRealtime();setupNotificationsRealtime();setupProfileRealtime();setupPresenceRealtime();paintAvatar($("composerAvatar"),profile?.avatar_url,profile?.name);}
 function showWelcome(){ $("app").classList.add("hidden");$("welcome").classList.remove("hidden");}
 function openAuth(login=false){isLogin=login;$("authTitle").textContent=login?"Đăng nhập LUMIO":"Tạo tài khoản LUMIO";$("authHint").textContent=login?"Chào mừng bạn quay trở lại.":"Đăng ký để tạo hồ sơ và bắt đầu kết nối."; $("authSubmit").textContent=login?"Đăng nhập":"Tạo tài khoản";$("switchAuth").textContent=login?"Chưa có tài khoản? Đăng ký":"Đã có tài khoản? Đăng nhập";$("authMessage").textContent="";$("authModal").classList.remove("hidden")}
 function closeAuth(){$("authModal").classList.add("hidden")}
@@ -374,7 +429,7 @@ async function loadFeed(){
  finally{feedLoading=false}
 }
 function renderPostCard(post,author,reactions,comments,root){
- const card=document.createElement("article");card.className="feed-post";
+ const card=document.createElement("article");card.className="feed-post";card.dataset.postId=post.id;
  const head=document.createElement("div");head.className="feed-post-head";
  const avatar=document.createElement("div");avatar.className="avatar feed-avatar";paintAvatar(avatar,author.avatar_url,author.display_name||"L");
  const identity=document.createElement("div");identity.className="feed-identity";
@@ -423,8 +478,8 @@ function setupFeedRealtime(){
 }
 
 function switchTab(tab){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));$("view-"+tab).classList.remove("hidden")}
-document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{switchTab(b.dataset.tab);if(b.dataset.tab==="feed")loadFeed()}));
-$("refreshFeed").onclick=()=>loadFeed();$("postComposer").onsubmit=publishPost;$("postImage").onchange=e=>setPostImagePreview(e.target.files?.[0]||null);
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{switchTab(b.dataset.tab);if(b.dataset.tab==="feed")loadFeed();if(b.dataset.tab==="notifications")loadNotifications()}));
+$("refreshFeed").onclick=()=>loadFeed();$("markAllNotificationsRead").onclick=markAllNotificationsRead;$("postComposer").onsubmit=publishPost;$("postImage").onchange=e=>setPostImagePreview(e.target.files?.[0]||null);
 $("refreshPeople").onclick=()=>renderPeople();
 $("openMessages").onclick=()=>{switchTab("messages");loadMatches()};
 $("closeChat").onclick=()=>{$("chatPanel").classList.add("hidden");$("messagesList").classList.remove("hidden");activeChat=null;if(chatRefreshTimer){clearInterval(chatRefreshTimer);chatRefreshTimer=null}if(messageChannel){db.removeChannel(messageChannel);messageChannel=null}};
@@ -439,7 +494,7 @@ $("resendConfirmation").onclick=async()=>{const email=$("email").value.trim();if
 $("authForm").onsubmit=async e=>{e.preventDefault();const email=$("email").value.trim(),password=$("password").value; if(!db){$("authMessage").textContent="Chưa kết nối Supabase. Hãy dùng bản demo hoặc cấu hình backend theo README.";return} $("authSubmit").disabled=true;try{const res=isLogin?await db.auth.signInWithPassword({email,password}):await db.auth.signUp({email,password,options:{emailRedirectTo:new URL("./",window.location.href).href}});if(res.error)throw res.error;if(!isLogin&&!res.data.session){$("authMessage").textContent="Đã gửi email xác nhận. Hãy mở Gmail để xác nhận."; $("resendConfirmation").classList.remove("hidden"); return}user=res.data.user;demo=false;closeAuth();showApp();toast("Đăng nhập thành công")}catch(err){$("authMessage").textContent=err.message||"Có lỗi xảy ra"}finally{$("authSubmit").disabled=false}};
 $("profileForm").onsubmit=async e=>{e.preventDefault();const p={...(profile||{}),name:$("displayName").value.trim(),bio:$("bio").value.trim(),country:$("country").value.trim(),interests:$("interests").value.trim()};localStorage.setItem("lumio_profile",JSON.stringify(p));profile=p;if(db&&user){const {error}=await db.from("profiles").upsert({id:user.id,display_name:p.name,bio:p.bio,country:p.country,interests:p.interests,avatar_url:p.avatar_url||null,updated_at:new Date().toISOString()});if(error){toast("Đã lưu trên thiết bị; đồng bộ lỗi: "+error.message);return}}loadProfile();toast("Đã lưu hồ sơ")}
 $("avatarFile").onchange=e=>{const file=e.target.files?.[0];if(file)uploadAvatar(file)};
-$("logoutButton").onclick=async()=>{await saveLastSeen();if(presenceChannel){await presenceChannel.untrack();db.removeChannel(presenceChannel);presenceChannel=null}if(presenceHeartbeat){clearInterval(presenceHeartbeat);presenceHeartbeat=null}onlineUserIds.clear();if(inboxChannel){db.removeChannel(inboxChannel);inboxChannel=null}if(profileChannel){db.removeChannel(profileChannel);profileChannel=null}if(feedChannel){db.removeChannel(feedChannel);feedChannel=null}if(db&&user)await db.auth.signOut();user=null;demo=false;showWelcome();toast("Bạn đã đăng xuất")};
+$("logoutButton").onclick=async()=>{await saveLastSeen();if(presenceChannel){await presenceChannel.untrack();db.removeChannel(presenceChannel);presenceChannel=null}if(presenceHeartbeat){clearInterval(presenceHeartbeat);presenceHeartbeat=null}onlineUserIds.clear();if(inboxChannel){db.removeChannel(inboxChannel);inboxChannel=null}if(profileChannel){db.removeChannel(profileChannel);profileChannel=null}if(feedChannel){db.removeChannel(feedChannel);feedChannel=null}if(notificationChannel){db.removeChannel(notificationChannel);notificationChannel=null}if(db&&user)await db.auth.signOut();user=null;demo=false;showWelcome();toast("Bạn đã đăng xuất")};
 $("peopleSearch")?.addEventListener("input",e=>{peopleSearch=e.target.value;updatePeopleFilterUI();renderFilteredPeople()});
 $("clearPeopleSearch")?.addEventListener("click",()=>{$("peopleSearch").value="";peopleSearch="";updatePeopleFilterUI();renderFilteredPeople();$("peopleSearch").focus()});
 document.querySelectorAll("#peopleFilters .chip").forEach(button=>button.addEventListener("click",()=>{peopleFilter=button.dataset.peopleFilter;updatePeopleFilterUI();renderFilteredPeople()}));

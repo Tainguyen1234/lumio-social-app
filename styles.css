@@ -438,3 +438,19 @@ html[data-theme="dark"] .feed-empty small{color:#b5a9c8}
  .composer-actions>span{font-size:8px}
  .feed-post-image{max-height:360px}
 }
+
+
+/* LUMIO notifications */
+.notifications-list{display:grid;gap:10px}
+.notification-item{width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:13px 14px;border:1px solid #eae6f2;border-radius:16px;background:linear-gradient(145deg,#fff,#fbfaff);box-shadow:0 6px 20px #5c4c800b;color:#4b435e;cursor:pointer}
+.notification-item.unread{border-color:#cfc0f4;background:linear-gradient(120deg,#f7f2ff,#fff8fc)}
+.notification-avatar{width:42px;height:42px;flex:0 0 42px;border-radius:14px;overflow:hidden}
+.notification-body{display:grid;gap:4px;min-width:0;flex:1}
+.notification-body strong{font-size:11px;line-height:1.5;color:#38314d;font-weight:800}
+.notification-body small{font-size:9px;color:#948da4}
+.notification-marker{width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:#9b83df;opacity:0}
+.notification-item.unread .notification-marker{opacity:1}
+html[data-theme="dark"] .notification-item{color:#eee7f8;background:linear-gradient(145deg,#241d32,#1c1728);border-color:#ffffff1b;box-shadow:0 6px 20px #0003}
+html[data-theme="dark"] .notification-item.unread{background:linear-gradient(120deg,#35264a,#302034);border-color:#a981df66}
+html[data-theme="dark"] .notification-body strong{color:#f4efff}
+html[data-theme="dark"] .notification-body small{color:#b5a9c8}

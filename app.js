@@ -23,7 +23,7 @@ async function refreshUnreadBadge(){
 async function markChatRead(){
  if(!db||!user||!activeChat)return;
  const {error}=await db.from("messages").update({read_at:new Date().toISOString()}).eq("sender_id",activeChat.id).eq("receiver_id",user.id).is("read_at",null);
- if(!error)refreshUnreadBadge();
+ if(!error)refreshUnreadBadge();else console.warn("LUMIO read receipt update failed:",error.message);
 }
 function setupInboxRealtime(){
  if(!db||!user)return;
@@ -163,7 +163,7 @@ async function loadChatMessages(){
  data.forEach(m=>{
   const wrap=document.createElement("div");wrap.className="chat-message "+(m.sender_id===user.id?"mine":"theirs");
   const bubble=document.createElement("div");bubble.className="chat-bubble "+(m.sender_id===user.id?"mine":"theirs");bubble.textContent=m.body;
-  const meta=document.createElement("small");meta.className="message-meta";meta.textContent=formatMessageTime(m.created_at)+(m.sender_id===user.id&&m.read_at?" · Đã xem":"");
+  const meta=document.createElement("small");meta.className="message-meta";meta.textContent=formatMessageTime(m.created_at)+(m.sender_id===user.id?(m.read_at?" · Đã xem":" · Đã gửi"):"");
   wrap.append(bubble,meta);root.append(wrap);
  });
  root.scrollTop=root.scrollHeight;

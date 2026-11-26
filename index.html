@@ -25,13 +25,18 @@
     <section id="app" class="app hidden">
       <div class="hello"><div><div class="eyebrow">LUMIO COMMUNITY</div><h2 id="greeting">Xin chào ✨</h2><p>Hôm nay bạn muốn kết nối thế nào?</p></div><div class="avatar" id="myAvatar">L</div></div>
       <nav class="tabs">
-        <button class="tab active" data-tab="discover">⌕<span>Khám phá</span></button>
+        <button class="tab active" data-tab="feed">▤<span>Bảng tin</span></button><button class="tab" data-tab="discover">⌕<span>Khám phá</span></button>
         <button class="tab" data-tab="mood">✧<span>Tâm trạng</span></button>
         <button class="tab" data-tab="play">◈<span>Trò chơi</span></button>
         <button class="tab" data-tab="rooms">◉<span>Phòng</span></button>
         <button class="tab" data-tab="profile">♙<span>Cá nhân</span></button><button id="openMessages" class="tab" data-tab="messages" aria-label="Tin nhắn">♡<span>Tin nhắn</span><i id="messageUnreadCount" class="unread-count hidden" aria-live="polite"></i></button>
       </nav>
-      <section id="view-discover" class="view">
+      <section id="view-feed" class="view">
+        <div class="section-head"><div><h3>Bảng tin cộng đồng</h3><p>Chia sẻ khoảnh khắc và kết nối cùng LUMIO</p></div><button id="refreshFeed" class="secondary small" type="button">↻ Làm mới</button></div>
+        <form id="postComposer" class="post-composer"><div class="composer-top"><div class="avatar composer-avatar" id="composerAvatar">L</div><textarea id="postContent" maxlength="2000" placeholder="Bạn đang nghĩ gì? Chia sẻ với cộng đồng LUMIO..." aria-label="Nội dung bài viết"></textarea></div><div id="postImagePreview" class="post-image-preview hidden"></div><div class="composer-actions"><label class="attach-image" for="postImage">▧ Ảnh</label><input id="postImage" type="file" accept="image/jpeg,image/png,image/webp" hidden><span id="postImageStatus" aria-live="polite">Tối đa 8 MB · JPG, PNG, WebP</span><button id="publishPost" class="primary small" type="submit">Đăng bài ↗</button></div></form>
+        <div id="feedPosts" class="feed-posts" aria-live="polite"><p class="notice">Đăng nhập để xem bảng tin cộng đồng.</p></div>
+      </section>
+      <section id="view-discover" class="view hidden">
         <div class="section-head"><div><h3>Khám phá cộng đồng</h3><p>Những người có thể hợp vibe với bạn</p></div><button id="refreshPeople" class="secondary small" type="button">↻ Làm mới</button></div>
         <div class="people-tools"><label class="people-search"><span>⌕</span><input id="peopleSearch" type="search" placeholder="Tìm tên, quốc gia, sở thích..." autocomplete="off" aria-label="Tìm thành viên"></label><button id="clearPeopleSearch" class="clear-search hidden" type="button" aria-label="Xóa tìm kiếm">×</button></div><div class="filters" id="peopleFilters"><button class="chip selected" data-people-filter="recommended" type="button">✦ Dành cho bạn</button><button class="chip" data-people-filter="all" type="button">🌍 Toàn cầu</button><button class="chip" data-people-filter="interests" type="button">♡ Cùng sở thích</button></div>
         <div id="peopleResultCount" class="people-result-count" aria-live="polite"></div><div id="people" class="people"></div>

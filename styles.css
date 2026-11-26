@@ -836,3 +836,20 @@ html[data-theme="dark"] .room-emoji-toggle{background:#ffffff0b;border-color:#ff
  #view-rooms.room-chat-active .room-chat-panel .chat-form{gap:7px}
  #view-rooms.room-chat-active .room-emoji-toggle{flex-basis:40px;width:40px;height:46px}
 }
+
+
+/* Prevent expanded emoji tray from covering room messages */
+#view-rooms.room-chat-active .room-chat-panel{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+#view-rooms.room-chat-active #roomChatMessages{
+ position:relative;z-index:1;flex:1 1 0!important;min-height:0!important;
+ overflow-x:hidden!important;overflow-y:auto!important;contain:paint;
+}
+#view-rooms.room-chat-active .room-emoji-bar:not(.hidden){
+ position:relative;z-index:2;display:flex!important;flex:0 0 auto!important;
+ flex-shrink:0!important;min-height:40px;max-height:42px;
+ padding:5px 2px!important;margin:0!important;
+ background:inherit;isolation:isolate;
+}
+#view-rooms.room-chat-active .room-chat-panel .chat-form{
+ position:relative;z-index:3;flex:0 0 auto!important;flex-shrink:0!important;
+}

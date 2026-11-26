@@ -84,7 +84,11 @@ async function loadMatches(){
 }
 async function openChat(otherId,name){
  if(!db||!user)return;
- activeChat={id:otherId,name};$("chatPanel").classList.remove("hidden");$("chatTitle").textContent=name;$("chatMessages").textContent="Đang tải tin nhắn...";
+ activeChat={id:otherId,name};
+ $("messagesList").classList.add("hidden");
+ $("chatPanel").classList.remove("hidden");
+ $("chatTitle").textContent=name;
+ $("chatMessages").textContent="Đang tải tin nhắn...";
  await loadChatMessages();
  if(messageChannel)db.removeChannel(messageChannel);
  messageChannel=db.channel("lumio-chat-"+user.id).on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},payload=>{
@@ -119,7 +123,7 @@ function switchTab(tab){document.querySelectorAll(".tab").forEach(b=>b.classList
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
 $("refreshPeople").onclick=()=>renderPeople();
 $("openMessages").onclick=()=>{switchTab("messages");loadMatches()};
-$("closeChat").onclick=()=>{$("chatPanel").classList.add("hidden");activeChat=null;if(chatRefreshTimer){clearInterval(chatRefreshTimer);chatRefreshTimer=null}if(messageChannel){db.removeChannel(messageChannel);messageChannel=null}};
+$("closeChat").onclick=()=>{$("chatPanel").classList.add("hidden");$("messagesList").classList.remove("hidden");activeChat=null;if(chatRefreshTimer){clearInterval(chatRefreshTimer);chatRefreshTimer=null}if(messageChannel){db.removeChannel(messageChannel);messageChannel=null}};
 $("chatForm").onsubmit=sendChatMessage;
 $("startButton").onclick=()=>openAuth(false);
 $("demoButton").onclick=()=>{demo=true;user=null;showApp();toast("Bạn đang trải nghiệm chế độ demo")};

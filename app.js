@@ -378,27 +378,48 @@ async function joinRoom(room){
  if(error&&error.code!=="23505"){toast("Chưa tham gia được phòng: "+error.message);return}
  await openRoom(room);
 }
+let roomOpenRequest=0;
+function withRoomTimeout(promise,ms=15000){
+ let timer;
+ return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error("Kết nối đang chậm. Vui lòng thử lại.")),ms)})]).finally(()=>clearTimeout(timer));
+}
 async function openRoom(room){
+ const request=++roomOpenRequest;
  activeRoom=room;
  $("view-rooms").classList.add("room-chat-active");$("app").classList.add("room-focus-active");
  $("roomList").classList.add("hidden");$("roomChatPanel").classList.remove("hidden");
  $("roomChatTitle").textContent=room.name;$("roomChatSubtitle").textContent=room.description;
- $("roomChatMessages").innerHTML='<p class="notice">Đang tải tin nhắn...</p>';
+ const root=$("roomChatMessages");
+ root.innerHTML='<p class="notice">Đang tải tin nhắn...</p>';
  if(roomChannel){await db.removeChannel(roomChannel);roomChannel=null}
- const {data,error}=await db.from("room_messages").select("id,room_id,sender_id,body,created_at").eq("room_id",room.id).order("created_at",{ascending:true}).limit(100);
- const root=$("roomChatMessages");root.innerHTML="";
- if(error){root.textContent="Không tải được tin nhắn: "+error.message;return}
- const ids=[...new Set((data||[]).map(x=>x.sender_id))];
- const {data:profiles}=ids.length?await db.from("profiles").select("id,display_name,avatar_url").in("id",ids):{data:[]};
- const people=new Map((profiles||[]).map(x=>[x.id,x]));
- (data||[]).forEach(m=>renderRoomMessage(m,people.get(m.sender_id)));
- if(!data?.length)root.innerHTML='<p class="notice">Phòng vừa mở cửa! Hãy gửi lời chào đầu tiên.</p>';
- await loadRoomMembers();
- roomChannel=db.channel("lumio-room-"+room.id).on("postgres_changes",{event:"INSERT",schema:"public",table:"room_messages",filter:"room_id=eq."+room.id},async payload=>{
-  if(payload.new.sender_id===user.id)return;
-  const {data:p}=await db.from("profiles").select("display_name,avatar_url").eq("id",payload.new.sender_id).maybeSingle();
-  renderRoomMessage(payload.new,p);
- }).subscribe();
+ try{
+  const result=await withRoomTimeout(db.from("room_messages").select("id,room_id,sender_id,body,created_at").eq("room_id",room.id).order("created_at",{ascending:true}).limit(100));
+  if(request!==roomOpenRequest||activeRoom?.id!==room.id)return;
+  if(result.error)throw result.error;
+  const data=result.data||[],ids=[...new Set(data.map(x=>x.sender_id))];
+  let profiles=[];
+  if(ids.length){
+   const profileResult=await withRoomTimeout(db.from("profiles").select("id,display_name,avatar_url").in("id",ids));
+   if(profileResult.error)console.warn("LUMIO room profiles failed:",profileResult.error.message);
+   profiles=profileResult.data||[];
+  }
+  if(request!==roomOpenRequest||activeRoom?.id!==room.id)return;
+  const people=new Map(profiles.map(x=>[x.id,x]));
+  root.innerHTML="";
+  data.forEach(m=>renderRoomMessage(m,people.get(m.sender_id)));
+  if(!data.length)root.innerHTML='<p class="notice">Phòng vừa mở cửa! Hãy gửi lời chào đầu tiên.</p>';
+  await loadRoomMembers();
+  if(request!==roomOpenRequest||activeRoom?.id!==room.id)return;
+  roomChannel=db.channel("lumio-room-"+room.id).on("postgres_changes",{event:"INSERT",schema:"public",table:"room_messages",filter:"room_id=eq."+room.id},async payload=>{
+   if(payload.new.sender_id===user.id||activeRoom?.id!==room.id)return;
+   const {data:p}=await db.from("profiles").select("display_name,avatar_url").eq("id",payload.new.sender_id).maybeSingle();
+   if(activeRoom?.id===room.id)renderRoomMessage(payload.new,p);
+  }).subscribe();
+ }catch(error){
+  if(request!==roomOpenRequest||activeRoom?.id!==room.id)return;
+  console.warn("LUMIO room load failed:",error);
+  showRetryState(root,"Chưa tải được tin nhắn phòng "+room.name+". Kiểm tra kết nối rồi thử lại.",()=>openRoom(room),"Tải lại tin nhắn");
+ }
 }
 async function sendRoomMessage(event){
  event.preventDefault();if(!activeRoom||!user)return;

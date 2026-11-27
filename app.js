@@ -273,9 +273,13 @@ async function renderPeople(){
   renderFilteredPeople();return;
  }
  list.innerHTML='<p class="notice">Đang tìm những người dùng LUMIO...</p>';
- const {data,error}=await db.from("profiles").select("id,display_name,bio,country,interests,mood,avatar_url,created_at,last_seen_at").neq("id",user.id).order("created_at",{ascending:false}).limit(60);
- if(error){list.innerHTML="";toast("Không tải được danh sách: "+error.message);return}
- allPeople=(data||[]).map(p=>({id:p.id,name:p.display_name||"Lumio Member",country:p.country||"Chưa cập nhật quốc gia",mood:p.mood||"Chưa cập nhật tâm trạng",bio:p.bio||p.interests||"Đang khám phá LUMIO",interests:p.interests||"",initial:(p.display_name||"L").slice(0,1).toUpperCase(),avatar_url:p.avatar_url,last_seen_at:p.last_seen_at}));
+ const [{data,error},{data:blocks, error:blockError}]=await Promise.all([
+  db.from("profiles").select("id,display_name,bio,country,interests,mood,avatar_url,created_at,last_seen_at").neq("id",user.id).order("created_at",{ascending:false}).limit(100),
+  db.from("user_blocks").select("blocked_id").eq("blocker_id",user.id)
+ ]);
+ if(error||blockError){list.innerHTML="";toast("Không tải được danh sách thành viên.");return}
+ const blockedIds=new Set((blocks||[]).map(x=>x.blocked_id));
+ allPeople=(data||[]).filter(p=>!blockedIds.has(p.id)).map(p=>({id:p.id,name:p.display_name||"Lumio Member",country:p.country||"Chưa cập nhật quốc gia",mood:p.mood||"Chưa cập nhật tâm trạng",bio:p.bio||p.interests||"Đang khám phá LUMIO",interests:p.interests||"",initial:(p.display_name||"L").slice(0,1).toUpperCase(),avatar_url:p.avatar_url,last_seen_at:p.last_seen_at}));
  renderFilteredPeople();
 }
 function renderPersonCard(p,list,isDemo){
@@ -285,7 +289,28 @@ function renderPersonCard(p,list,isDemo){
  const info=document.createElement("div");const name=document.createElement("h4");name.textContent=p.name;const meta=document.createElement("small");meta.textContent=p.country+" · "+p.mood;info.append(name,meta);if(!isDemo)appendPresenceLabel(info,p.id,p.last_seen_at);top.append(avatar,info);
  const bio=document.createElement("p");bio.textContent=p.bio;
  const actions=document.createElement("div");actions.className="person-actions";
- const pass=document.createElement("button");pass.className="pass";pass.textContent="Bỏ qua";pass.onclick=()=>el.remove();
+ const pass=document.createElement("button");pass.className="pass";pass.textContent="Bỏ qua";pass.onclick=()=>el.remove(); const report=document.createElement("button");report.className="safety-action";report.type="button";report.textContent="Báo cáo";
+ report.onclick=async()=>{
+  if(isDemo||!user){toast("Đăng nhập để gửi báo cáo.");return}
+  const category=prompt("Chọn lý do: spam, quấy rối, hồ sơ giả, nội dung không phù hợp, khác","other");
+  if(!category)return;
+  const map={spam:"spam","quấy rối":"harassment","ho so gia":"fake_profile","hồ sơ giả":"fake_profile","nội dung không phù hợp":"inappropriate_content","khác":"other",other:"other"};
+  const normalized=map[category.trim().toLowerCase()];
+  if(!normalized){toast("Lý do chưa hợp lệ.");return}
+  const details=prompt("Mô tả ngắn gọn vấn đề (ít nhất 8 ký tự):","");
+  if(!details||details.trim().length<8){toast("Vui lòng mô tả ít nhất 8 ký tự.");return}
+  const {error}=await db.from("user_reports").insert({reporter_id:user.id,reported_user_id:p.id,category:normalized,details:details.trim()});
+  if(error){toast("Chưa gửi được báo cáo. Vui lòng thử lại.");return}
+  toast("Đã gửi báo cáo. Cảm ơn bạn đã giúp LUMIO an toàn hơn.");
+ };
+ const block=document.createElement("button");block.className="safety-action";block.type="button";block.textContent="Chặn";
+ block.onclick=async()=>{
+  if(isDemo||!user){toast("Đăng nhập để chặn thành viên.");return}
+  if(!confirm("Chặn "+p.name+"? Người này sẽ bị ẩn khỏi danh sách khám phá của bạn."))return;
+  const {error}=await db.from("user_blocks").insert({blocker_id:user.id,blocked_id:p.id});
+  if(error){toast(error.code==="23505"?"Bạn đã chặn thành viên này rồi.":"Chưa chặn được thành viên. Vui lòng thử lại.");return}
+  el.remove();allPeople=allPeople.filter(x=>x.id!==p.id);toast("Đã chặn thành viên.");
+ };
  const like=document.createElement("button");like.className="like";like.textContent="♥ Kết nối";
  like.onclick=async()=>{
   if(isDemo){toast("Đây là hồ sơ demo; đăng nhập và chờ thành viên thật để kết nối.");return}
@@ -306,7 +331,7 @@ function renderPersonCard(p,list,isDemo){
    toast("Đã gửi lời thích! Chờ người ấy phản hồi nhé.");
   }
  };
- actions.append(pass,like);el.append(top,bio,actions);list.appendChild(el);
+ actions.append(pass,like);if(!isDemo){actions.append(report,block)}el.append(top,bio,actions);list.appendChild(el);
 }
 
 function renderRoomMessage(message,author){
@@ -400,7 +425,12 @@ async function loadMatches(){
  if(error){root.textContent="Chưa tải được kết nối. Hãy chạy bản cập nhật SQL trong Supabase. Chi tiết: "+error.message;return}
  if(!matches?.length){root.textContent="Chưa có tương hợp hai chiều. Khi bạn và một thành viên cùng thích nhau, cuộc trò chuyện sẽ xuất hiện ở đây.";return}
  const ids=matches.map(m=>m.user1===user.id?m.user2:m.user1);
- const {data:profiles,error:profileError}=await db.from("profiles").select("id,display_name,country,avatar_url,last_seen_at").in("id",ids);
+ const {data:blocks}=await db.from("user_blocks").select("blocked_id").eq("blocker_id",user.id);
+ const blockedIds=new Set((blocks||[]).map(x=>x.blocked_id));
+ const visibleMatches=matches.filter(m=>!blockedIds.has(m.user1===user.id?m.user2:m.user1));
+ const visibleIds=visibleMatches.map(m=>m.user1===user.id?m.user2:m.user1);
+ if(!visibleMatches.length){root.textContent="Chưa có cuộc trò chuyện nào.";return}
+ const {data:profiles,error:profileError}=await db.from("profiles").select("id,display_name,country,avatar_url,last_seen_at").in("id",visibleIds);
  if(profileError){root.textContent="Không tải được hồ sơ kết nối: "+profileError.message;return}
  const {data:recentMessages,messageError}=await db.from("messages").select("id,sender_id,receiver_id,body,created_at,read_at").or("sender_id.eq."+user.id+",receiver_id.eq."+user.id).order("created_at",{ascending:false}).limit(500);
  const latestByUser=new Map(),unreadByUser=new Map();
@@ -410,12 +440,12 @@ async function loadMatches(){
   if(msg.receiver_id===user.id&&!msg.read_at)unreadByUser.set(other,(unreadByUser.get(other)||0)+1);
  });
  root.innerHTML="";
- matches.sort((a,b)=>{
+ visibleMatches.sort((a,b)=>{
   const aId=a.user1===user.id?a.user2:a.user1,bId=b.user1===user.id?b.user2:b.user1;
   const aTime=latestByUser.get(aId)?.created_at||a.created_at,bTime=latestByUser.get(bId)?.created_at||b.created_at;
   return new Date(bTime)-new Date(aTime);
  });
- matches.forEach(m=>{
+ visibleMatches.forEach(m=>{
   const other=m.user1===user.id?m.user2:m.user1, p=(profiles||[]).find(x=>x.id===other)||{},last=latestByUser.get(other),unread=unreadByUser.get(other)||0;
   const b=document.createElement("button");b.className="match-row message-thread"+(unread?" has-unread":"");b.type="button";
   const av=document.createElement("span");av.className="match-avatar";if(p.avatar_url){const img=document.createElement("img");img.src=p.avatar_url;img.alt="Ảnh đại diện";av.append(img)}else av.textContent=(p.display_name||"L").slice(0,1).toUpperCase();

@@ -524,7 +524,8 @@ html[data-theme="dark"] .more-nav-item.active{background:#392b50;color:#d9c5ff}
 .room-message p{font-size:13px;line-height:1.5;white-space:pre-wrap}
 .room-message small{font-size:9px;color:var(--muted);margin-top:5px;text-align:right}
 .room-message.mine b,.room-message.mine small{color:#f1dcff}
-.room-chat-panel .chat-form{margin-top:5px}\n.room-typing-indicator{min-height:15px;margin:0;padding:0 4px;font-size:10px;color:var(--muted);font-style:italic}\n.room-typing-indicator:empty{display:none}
+.room-chat-panel .chat-form{margin-top:5px}
+.room-typing-indicator{min-height:15px;margin:0;padding:0 4px;font-size:10px;color:var(--muted);font-style:italic}\n.room-typing-indicator:empty{display:none}
 .room-chat-panel .chat-form input{min-width:0}
 html[data-theme="dark"] .room-chat-panel{background:#211b2d;border-color:#ffffff20}
 html[data-theme="dark"] .room-message.theirs{background:#ffffff10;border-color:#ffffff18}

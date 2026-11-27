@@ -282,6 +282,11 @@ async function renderPeople(){
  allPeople=(data||[]).filter(p=>!blockedIds.has(p.id)).map(p=>({id:p.id,name:p.display_name||"Lumio Member",country:p.country||"Chưa cập nhật quốc gia",mood:p.mood||"Chưa cập nhật tâm trạng",bio:p.bio||p.interests||"Đang khám phá LUMIO",interests:p.interests||"",initial:(p.display_name||"L").slice(0,1).toUpperCase(),avatar_url:p.avatar_url,last_seen_at:p.last_seen_at}));
  renderFilteredPeople();
 }
+let reportTargetId=null;
+function openReportModal(id,name){if(!db||!user){toast("Đăng nhập để gửi báo cáo.");return}reportTargetId=id;$("reportTargetName").textContent="Báo cáo thành viên: "+name;$("reportDetails").value="";$("reportStatus").textContent="";$("reportModal").classList.remove("hidden");$("reportCategory").focus()}
+function closeReportModal(){$("reportModal").classList.add("hidden");reportTargetId=null}
+async function submitUserReport(e){e.preventDefault();if(!db||!user||!reportTargetId)return;const button=$("submitReport"),details=$("reportDetails").value.trim();if(details.length<8){$("reportStatus").textContent="Vui lòng mô tả ít nhất 8 ký tự.";return}button.disabled=true;button.textContent="Đang gửi...";const {error}=await db.from("user_reports").insert({reporter_id:user.id,reported_user_id:reportTargetId,category:$("reportCategory").value,details});button.disabled=false;button.textContent="Gửi báo cáo";if(error){$("reportStatus").textContent="Chưa gửi được. Vui lòng thử lại.";return}closeReportModal();toast("Đã gửi báo cáo. Cảm ơn bạn đã giúp LUMIO an toàn hơn.")}
+async function loadBlockedUsers(){const root=$("blockedUsersList");if(!root)return;if(!db||!user){root.innerHTML='<p class="notice">Đăng nhập để quản lý danh sách đã chặn.</p>';return}root.innerHTML='<p class="notice">Đang tải danh sách...</p>';const {data:blocks,error}=await db.from("user_blocks").select("blocked_id,created_at").eq("blocker_id",user.id).order("created_at",{ascending:false});if(error){root.innerHTML='<p class="notice">Chưa tải được danh sách đã chặn.</p>';return}if(!blocks?.length){root.innerHTML='<p class="notice">Bạn chưa chặn thành viên nào.</p>';return}const ids=blocks.map(x=>x.blocked_id),{data:people}=await db.from("profiles").select("id,display_name,avatar_url").in("id",ids),map=new Map((people||[]).map(x=>[x.id,x]));root.innerHTML="";blocks.forEach(item=>{const p=map.get(item.blocked_id)||{},row=document.createElement("div");row.className="blocked-user-row";const av=document.createElement("span");av.className="avatar";paintAvatar(av,p.avatar_url,p.display_name||"L");const name=document.createElement("strong");name.textContent=p.display_name||"Thành viên LUMIO";const btn=document.createElement("button");btn.type="button";btn.className="secondary small";btn.textContent="Bỏ chặn";btn.onclick=async()=>{btn.disabled=true;const {error}=await db.from("user_blocks").delete().eq("blocker_id",user.id).eq("blocked_id",item.blocked_id);if(error){btn.disabled=false;toast("Chưa bỏ chặn được.");return}row.remove();await renderPeople();toast("Đã bỏ chặn thành viên.");if(!root.children.length)root.innerHTML='<p class="notice">Bạn chưa chặn thành viên nào.</p>'};row.append(av,name,btn);root.append(row)})}
 function renderPersonCard(p,list,isDemo){
  const el=document.createElement("article");el.className="person";
  const top=document.createElement("div");top.className="person-top";
@@ -289,29 +294,10 @@ function renderPersonCard(p,list,isDemo){
  const info=document.createElement("div");const name=document.createElement("h4");name.textContent=p.name;const meta=document.createElement("small");meta.textContent=p.country+" · "+p.mood;info.append(name,meta);if(!isDemo)appendPresenceLabel(info,p.id,p.last_seen_at);top.append(avatar,info);
  const bio=document.createElement("p");bio.textContent=p.bio;
  const actions=document.createElement("div");actions.className="person-actions";
- const pass=document.createElement("button");pass.className="pass";pass.textContent="Bỏ qua";pass.onclick=()=>el.remove(); const report=document.createElement("button");report.className="safety-action";report.type="button";report.textContent="Báo cáo";
- report.onclick=async()=>{
-  if(isDemo||!user){toast("Đăng nhập để gửi báo cáo.");return}
-  const category=prompt("Chọn lý do: spam, quấy rối, hồ sơ giả, nội dung không phù hợp, khác","other");
-  if(!category)return;
-  const map={spam:"spam","quấy rối":"harassment","ho so gia":"fake_profile","hồ sơ giả":"fake_profile","nội dung không phù hợp":"inappropriate_content","khác":"other",other:"other"};
-  const normalized=map[category.trim().toLowerCase()];
-  if(!normalized){toast("Lý do chưa hợp lệ.");return}
-  const details=prompt("Mô tả ngắn gọn vấn đề (ít nhất 8 ký tự):","");
-  if(!details||details.trim().length<8){toast("Vui lòng mô tả ít nhất 8 ký tự.");return}
-  const {error}=await db.from("user_reports").insert({reporter_id:user.id,reported_user_id:p.id,category:normalized,details:details.trim()});
-  if(error){toast("Chưa gửi được báo cáo. Vui lòng thử lại.");return}
-  toast("Đã gửi báo cáo. Cảm ơn bạn đã giúp LUMIO an toàn hơn.");
- };
- const block=document.createElement("button");block.className="safety-action";block.type="button";block.textContent="Chặn";
- block.onclick=async()=>{
-  if(isDemo||!user){toast("Đăng nhập để chặn thành viên.");return}
-  if(!confirm("Chặn "+p.name+"? Người này sẽ bị ẩn khỏi danh sách khám phá của bạn."))return;
-  const {error}=await db.from("user_blocks").insert({blocker_id:user.id,blocked_id:p.id});
-  if(error){toast(error.code==="23505"?"Bạn đã chặn thành viên này rồi.":"Chưa chặn được thành viên. Vui lòng thử lại.");return}
-  el.remove();allPeople=allPeople.filter(x=>x.id!==p.id);toast("Đã chặn thành viên.");
- };
- const like=document.createElement("button");like.className="like";like.textContent="♥ Kết nối";
+ const pass=document.createElement("button");pass.className="pass";pass.textContent="Bỏ qua";pass.onclick=()=>el.remove(); const report=document.createElement("button");report.className="safety-action";report.type="button";report.textContent="Báo cáo";report.onclick=()=>openReportModal(p.id,p.name);
+  const block=document.createElement("button");block.className="safety-action";block.type="button";block.textContent="Chặn";
+  block.onclick=async()=>{if(isDemo||!user){toast("Đăng nhập để chặn thành viên.");return}if(!window.confirm("Chặn "+p.name+"? Thành viên này sẽ bị ẩn khỏi Khám phá và hộp thư của bạn."))return;const {error}=await db.from("user_blocks").insert({blocker_id:user.id,blocked_id:p.id});if(error){toast(error.code==="23505"?"Bạn đã chặn thành viên này rồi.":"Chưa chặn được thành viên.");return}el.remove();allPeople=allPeople.filter(x=>x.id!==p.id);await loadMatches();toast("Đã chặn thành viên.")};
+  const like=document.createElement("button");like.className="like";like.textContent="♥ Kết nối";
  like.onclick=async()=>{
   if(isDemo){toast("Đây là hồ sơ demo; đăng nhập và chờ thành viên thật để kết nối.");return}
   like.disabled=true;
@@ -649,7 +635,7 @@ function switchTab(tab){
  if(more){more.classList.remove("active");more.setAttribute("aria-expanded","false")}
  if(tab==="feed")loadFeed();
  if(tab==="notifications")loadNotifications();
- if(tab==="rooms")loadRooms();
+ if(tab==="rooms")loadRooms();if(tab==="profile")loadBlockedUsers();
 }
 function toggleMoreNav(force){
  const menu=$("moreNavMenu"),button=$("moreNavButton");if(!menu||!button)return;
@@ -659,7 +645,7 @@ function toggleMoreNav(force){
 document.querySelectorAll(".tab[data-tab],.more-nav-item").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
 $("moreNavButton").onclick=()=>toggleMoreNav();
 document.addEventListener("click",e=>{if(!$("moreNavMenu")?.contains(e.target)&&!$("moreNavButton")?.contains(e.target))toggleMoreNav(false)});
-$("betaFeedbackForm").onsubmit=submitBetaFeedback;
+$("betaFeedbackForm").onsubmit=submitBetaFeedback;$("reportForm").onsubmit=submitUserReport;$("closeReportModal").onclick=closeReportModal;$("cancelReport").onclick=closeReportModal;$("blockedUsersRefresh").onclick=loadBlockedUsers;
 $("refreshFeed").onclick=()=>loadFeed();$("markAllNotificationsRead").onclick=markAllNotificationsRead;$("postComposer").onsubmit=publishPost;$("postImage").onchange=e=>setPostImagePreview(e.target.files?.[0]||null);
 $("refreshPeople").onclick=()=>renderPeople();
 $("openMessages").onclick=()=>{switchTab("messages");loadMatches()};

@@ -397,7 +397,7 @@ async function sendRoomMessage(event){
  $("sendRoomMessage").disabled=true;
  const {error}=await db.from("room_messages").insert({room_id:activeRoom.id,sender_id:user.id,body});
  $("sendRoomMessage").disabled=false;
- if(error){toast("Chưa gửi được tin nhắn: "+error.message);return}
+ if(error){toast(error.code==="42501"?"Không thể gửi tin nhắn vì cuộc trò chuyện đang bị chặn.":"Chưa gửi được tin nhắn: "+error.message);return}
  input.value="";
  const {data:p}=await db.from("profiles").select("display_name,avatar_url").eq("id",user.id).maybeSingle();
  const {data:latest}=await db.from("room_messages").select("id,room_id,sender_id,body,created_at").eq("room_id",activeRoom.id).eq("sender_id",user.id).order("created_at",{ascending:false}).limit(1);
@@ -478,7 +478,7 @@ async function loadChatMessages(){
  const other=activeChat.id;
  const filter="and(sender_id.eq."+user.id+",receiver_id.eq."+other+"),and(sender_id.eq."+other+",receiver_id.eq."+user.id+")";
  const {data,error}=await db.from("messages").select("id,sender_id,receiver_id,body,created_at,read_at").or(filter).order("created_at",{ascending:true}).limit(200);
- const root=$("chatMessages");if(error){root.textContent="Không tải được tin nhắn: "+error.message;return}
+ const root=$("chatMessages");if(error){root.textContent=error.code==="42501"?"Cuộc trò chuyện này hiện bị hạn chế do một trong hai tài khoản đã chặn tài khoản còn lại.":"Không tải được tin nhắn: "+error.message;return}
  root.innerHTML="";
  if(!data?.length){root.textContent="Hai bạn đã tương hợp! Hãy gửi lời chào đầu tiên.";return}
  data.forEach(m=>{

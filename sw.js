@@ -1,4 +1,4 @@
-const CACHE="lumio-mvp-49";
+const CACHE="lumio-mvp-50";
 const ASSETS=["./","./index.html","./styles.css","./app.js","./config.js","./manifest.webmanifest","./icon.svg"];
 
 self.addEventListener("install",event=>{

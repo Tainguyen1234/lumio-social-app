@@ -378,7 +378,7 @@ async function joinRoom(room){
  if(error&&error.code!=="23505"){toast("Chưa tham gia được phòng: "+error.message);return}
  await openRoom(room);
 }
-let roomOpenRequest=0;
+let roomOpenRequest=0, roomTypingTimer=null, roomRemoteTypingTimer=null;
 function withRoomTimeout(promise,ms=15000){
  let timer;
  return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error("Kết nối đang chậm. Vui lòng thử lại.")),ms)})]).finally(()=>clearTimeout(timer));
@@ -410,7 +410,7 @@ async function openRoom(room){
   if(!data.length)root.innerHTML='<p class="notice">Phòng vừa mở cửa! Hãy gửi lời chào đầu tiên.</p>';
   await loadRoomMembers();
   if(request!==roomOpenRequest||activeRoom?.id!==room.id)return;
-  roomChannel=db.channel("lumio-room-"+room.id).on("postgres_changes",{event:"INSERT",schema:"public",table:"room_messages",filter:"room_id=eq."+room.id},async payload=>{
+  roomChannel=db.channel("lumio-room-"+room.id).on("broadcast",{event:"typing"},payload=>{\n   const indicator=$("roomTypingIndicator");if(!indicator||payload.payload?.user_id===user.id||activeRoom?.id!==room.id)return;\n   indicator.textContent=payload.payload?.typing?((payload.payload?.name||"Một thành viên")+" đang nhập tin nhắn…"):"";\n   if(roomRemoteTypingTimer)clearTimeout(roomRemoteTypingTimer);\n   if(payload.payload?.typing)roomRemoteTypingTimer=setTimeout(()=>{indicator.textContent=""},2500);\n  }).on("postgres_changes",{event:"INSERT",schema:"public",table:"room_messages",filter:"room_id=eq."+room.id},async payload=>{
    if(payload.new.sender_id===user.id||activeRoom?.id!==room.id)return;
    const {data:p}=await db.from("profiles").select("display_name,avatar_url").eq("id",payload.new.sender_id).maybeSingle();
    if(activeRoom?.id===room.id)renderRoomMessage(payload.new,p);
@@ -682,8 +682,8 @@ $("refreshFeed").onclick=()=>loadFeed();$("markAllNotificationsRead").onclick=ma
 $("refreshPeople").onclick=()=>renderPeople();
 $("openMessages").onclick=()=>{switchTab("messages");loadMatches()};
 $("refreshRooms").onclick=loadRooms;
-$("leaveRoomChat").onclick=async()=>{if(roomChannel){await db.removeChannel(roomChannel);roomChannel=null}activeRoom=null;$("view-rooms").classList.remove("room-chat-active");$("app").classList.remove("room-focus-active");loadRooms()};
-$("roomChatForm").onsubmit=sendRoomMessage;
+$("leaveRoomChat").onclick=async()=>{if(roomTypingTimer)clearTimeout(roomTypingTimer);if(roomRemoteTypingTimer)clearTimeout(roomRemoteTypingTimer);if(roomChannel){await db.removeChannel(roomChannel);roomChannel=null}activeRoom=null;$("view-rooms").classList.remove("room-chat-active");$("app").classList.remove("room-focus-active");loadRooms()};
+$("roomChatForm").onsubmit=sendRoomMessage;\n$("roomChatInput").addEventListener("input",()=>{if(!roomChannel||!activeRoom)return;roomChannel.send({type:"broadcast",event:"typing",payload:{user_id:user.id,name:profile?.name||"Thành viên",typing:!!$("roomChatInput").value.trim()}});if(roomTypingTimer)clearTimeout(roomTypingTimer);roomTypingTimer=setTimeout(()=>{if(roomChannel)roomChannel.send({type:"broadcast",event:"typing",payload:{user_id:user.id,typing:false}})},1200)});
 
 $("closeChat").onclick=()=>{if(typingTimer)clearTimeout(typingTimer);if(remoteTypingTimer)clearTimeout(remoteTypingTimer);typingIsOn=false;$("chatTypingIndicator").classList.add("hidden");if(messageChannel){db.removeChannel(messageChannel);messageChannel=null}$("chatPanel").classList.add("hidden");$("messagesList").classList.remove("hidden");activeChat=null;if(chatRefreshTimer){clearInterval(chatRefreshTimer);chatRefreshTimer=null}if(messageChannel){db.removeChannel(messageChannel);messageChannel=null}};
 $("chatInput").addEventListener("input",()=>{

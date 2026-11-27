@@ -411,7 +411,11 @@ async function openRoom(room){
   await loadRoomMembers();
   if(request!==roomOpenRequest||activeRoom?.id!==room.id)return;
   roomChannel=db.channel("lumio-room-"+room.id).on("broadcast",{event:"typing"},payload=>{
-   const indicator=$("roomTypingIndicator");if(!indicator||payload.payload?.user_id===user.id||activeRoom?.id!==room.id)return;\n   indicator.textContent=payload.payload?.typing?((payload.payload?.name||"Một thành viên")+" đang nhập tin nhắn…"):"";\n   if(roomRemoteTypingTimer)clearTimeout(roomRemoteTypingTimer);\n   if(payload.payload?.typing)roomRemoteTypingTimer=setTimeout(()=>{indicator.textContent=""},2500);\n  }).on("postgres_changes",{event:"INSERT",schema:"public",table:"room_messages",filter:"room_id=eq."+room.id},async payload=>{
+   const indicator=$("roomTypingIndicator");if(!indicator||payload.payload?.user_id===user.id||activeRoom?.id!==room.id)return;
+   indicator.textContent=payload.payload?.typing?((payload.payload?.name||"Một thành viên")+" đang nhập tin nhắn…"):"";
+   if(roomRemoteTypingTimer)clearTimeout(roomRemoteTypingTimer);
+   if(payload.payload?.typing)roomRemoteTypingTimer=setTimeout(()=>{indicator.textContent=""},2500);
+  }).on("postgres_changes",{event:"INSERT",schema:"public",table:"room_messages",filter:"room_id=eq."+room.id},async payload=>{
    if(payload.new.sender_id===user.id||activeRoom?.id!==room.id)return;
    const {data:p}=await db.from("profiles").select("display_name,avatar_url").eq("id",payload.new.sender_id).maybeSingle();
    if(activeRoom?.id===room.id)renderRoomMessage(payload.new,p);
@@ -430,6 +434,7 @@ async function sendRoomMessage(event){
  $("sendRoomMessage").disabled=false;
  if(error){toast(error.code==="42501"?"Không thể gửi tin nhắn vì cuộc trò chuyện đang bị chặn.":"Chưa gửi được tin nhắn: "+error.message);return}
  input.value="";
+ if(roomChannel)roomChannel.send({type:"broadcast",event:"typing",payload:{user_id:user.id,typing:false}});
  const {data:p}=await db.from("profiles").select("display_name,avatar_url").eq("id",user.id).maybeSingle();
  const {data:latest}=await db.from("room_messages").select("id,room_id,sender_id,body,created_at").eq("room_id",activeRoom.id).eq("sender_id",user.id).order("created_at",{ascending:false}).limit(1);
  if(latest?.[0])renderRoomMessage(latest[0],p);

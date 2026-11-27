@@ -410,7 +410,8 @@ async function openRoom(room){
   if(!data.length)root.innerHTML='<p class="notice">Phòng vừa mở cửa! Hãy gửi lời chào đầu tiên.</p>';
   await loadRoomMembers();
   if(request!==roomOpenRequest||activeRoom?.id!==room.id)return;
-  roomChannel=db.channel("lumio-room-"+room.id).on("broadcast",{event:"typing"},payload=>{\n   const indicator=$("roomTypingIndicator");if(!indicator||payload.payload?.user_id===user.id||activeRoom?.id!==room.id)return;\n   indicator.textContent=payload.payload?.typing?((payload.payload?.name||"Một thành viên")+" đang nhập tin nhắn…"):"";\n   if(roomRemoteTypingTimer)clearTimeout(roomRemoteTypingTimer);\n   if(payload.payload?.typing)roomRemoteTypingTimer=setTimeout(()=>{indicator.textContent=""},2500);\n  }).on("postgres_changes",{event:"INSERT",schema:"public",table:"room_messages",filter:"room_id=eq."+room.id},async payload=>{
+  roomChannel=db.channel("lumio-room-"+room.id).on("broadcast",{event:"typing"},payload=>{
+   const indicator=$("roomTypingIndicator");if(!indicator||payload.payload?.user_id===user.id||activeRoom?.id!==room.id)return;\n   indicator.textContent=payload.payload?.typing?((payload.payload?.name||"Một thành viên")+" đang nhập tin nhắn…"):"";\n   if(roomRemoteTypingTimer)clearTimeout(roomRemoteTypingTimer);\n   if(payload.payload?.typing)roomRemoteTypingTimer=setTimeout(()=>{indicator.textContent=""},2500);\n  }).on("postgres_changes",{event:"INSERT",schema:"public",table:"room_messages",filter:"room_id=eq."+room.id},async payload=>{
    if(payload.new.sender_id===user.id||activeRoom?.id!==room.id)return;
    const {data:p}=await db.from("profiles").select("display_name,avatar_url").eq("id",payload.new.sender_id).maybeSingle();
    if(activeRoom?.id===room.id)renderRoomMessage(payload.new,p);

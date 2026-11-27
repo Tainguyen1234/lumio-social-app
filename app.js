@@ -417,17 +417,19 @@ async function loadMatches(){
  if(!db||!user){root.textContent="Đăng nhập để xem các kết nối thật.";return}
  root.textContent="Đang tải kết nối...";
  const {data:matches,error}=await db.from("matches").select("user1,user2,created_at").or("user1.eq."+user.id+",user2.eq."+user.id).order("created_at",{ascending:false});
- if(error){root.textContent="Chưa tải được kết nối. Hãy chạy bản cập nhật SQL trong Supabase. Chi tiết: "+error.message;return}
- if(!matches?.length){root.textContent="Chưa có tương hợp hai chiều. Khi bạn và một thành viên cùng thích nhau, cuộc trò chuyện sẽ xuất hiện ở đây.";return}
+ if(error){showRetryState(root,"Chưa tải được kết nối. Kiểm tra mạng rồi thử lại.",loadMatches);return}
+ if(!matches?.length){root.innerHTML='<div class="feed-empty"><strong>Chưa có kết nối nào</strong><small>Khi bạn và một thành viên cùng thích nhau, cuộc trò chuyện sẽ xuất hiện ở đây.</small></div>';return}
  const ids=matches.map(m=>m.user1===user.id?m.user2:m.user1);
- const {data:blocks}=await db.from("user_blocks").select("blocked_id").eq("blocker_id",user.id);
+ const {data:blocks,error:blockError}=await db.from("user_blocks").select("blocked_id").eq("blocker_id",user.id);
+ if(blockError){showRetryState(root,"Không tải được thiết lập chặn. Vui lòng thử lại.",loadMatches);return}
  const blockedIds=new Set((blocks||[]).map(x=>x.blocked_id));
  const visibleMatches=matches.filter(m=>!blockedIds.has(m.user1===user.id?m.user2:m.user1));
  const visibleIds=visibleMatches.map(m=>m.user1===user.id?m.user2:m.user1);
  if(!visibleMatches.length){root.textContent="Chưa có cuộc trò chuyện nào.";return}
  const {data:profiles,error:profileError}=await db.from("profiles").select("id,display_name,country,avatar_url,last_seen_at").in("id",visibleIds);
  if(profileError){showRetryState(root,"Không tải được hồ sơ kết nối. Vui lòng thử lại.",loadMatches);return}
- const {data:recentMessages,messageError}=await db.from("messages").select("id,sender_id,receiver_id,body,created_at,read_at").or("sender_id.eq."+user.id+",receiver_id.eq."+user.id).order("created_at",{ascending:false}).limit(500);
+ const {data:recentMessages,error:messagesError}=await db.from("messages").select("id,sender_id,receiver_id,body,created_at,read_at").or("sender_id.eq."+user.id+",receiver_id.eq."+user.id).order("created_at",{ascending:false}).limit(500);
+ if(messagesError){showRetryState(root,"Không tải được tin nhắn gần đây. Vui lòng thử lại.",loadMatches);return}
  const latestByUser=new Map(),unreadByUser=new Map();
  (recentMessages||[]).forEach(msg=>{
   const other=msg.sender_id===user.id?msg.receiver_id:msg.sender_id;

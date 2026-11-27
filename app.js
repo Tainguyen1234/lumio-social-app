@@ -29,6 +29,15 @@ const demoPeople = [
 const questions = ["Nếu có thể đi bất cứ đâu cuối tuần này, bạn sẽ chọn nơi nào?","Bài hát nào luôn khiến tâm trạng bạn tốt hơn?","Bạn thích một buổi tối chơi game hay trò chuyện thật lâu?","Nếu có một siêu năng lực trong 24 giờ, bạn chọn gì?","Điều nhỏ bé nào khiến bạn vui hôm nay?"];
 let qIndex=0;
 function toast(msg){const t=$("toast");t.textContent=msg;t.classList.remove("hidden");setTimeout(()=>t.classList.add("hidden"),2600)}
+function showRetryState(root,message,retry,label="Thử lại"){
+ if(!root)return;
+ root.innerHTML="";
+ const wrap=document.createElement("div");wrap.className="load-retry";
+ const copy=document.createElement("p");copy.className="notice";copy.textContent=message;
+ const button=document.createElement("button");button.type="button";button.className="secondary small";button.textContent="↻ "+label;
+ button.addEventListener("click",()=>{button.disabled=true;button.textContent="Đang tải...";Promise.resolve(retry()).catch(error=>{console.warn("LUMIO retry failed:",error);button.disabled=false;button.textContent="↻ "+label})});
+ wrap.append(copy,button);root.append(wrap);
+}
 function formatMessageTime(value){if(!value)return "";return new Intl.DateTimeFormat("vi-VN",{hour:"2-digit",minute:"2-digit"}).format(new Date(value))}
 function formatLastSeen(value){
  if(!value)return "Chưa có hoạt động gần đây";
@@ -112,7 +121,7 @@ async function loadNotifications(){
  if(!db||!user){root.innerHTML='<div class="feed-empty"><span>♧</span><strong>Thông báo đang chờ bạn</strong><small>Đăng nhập để xem lượt thích, bình luận và kết nối mới.</small></div>';return}
  root.innerHTML='<p class="notice">Đang tải thông báo...</p>';
  const {data:items,error}=await db.from("notifications").select("id,actor_id,type,post_id,created_at,read_at").eq("recipient_id",user.id).order("created_at",{ascending:false}).limit(50);
- if(error){root.innerHTML='<p class="notice">Chưa tải được thông báo: '+escapeText(error.message)+'</p>';return}
+ if(error){showRetryState(root,"Chưa tải được thông báo. Kiểm tra kết nối rồi thử lại.",loadNotifications);return}
  if(!items?.length){root.innerHTML='<div class="feed-empty"><span>✧</span><strong>Bạn chưa có thông báo mới</strong><small>Khi có người thích, bình luận hoặc kết nối với bạn, thông báo sẽ xuất hiện ở đây.</small></div>';await refreshNotificationBadge();return}
  const actorIds=[...new Set(items.map(x=>x.actor_id))];
  const {data:people,error:profileError}=await db.from("profiles").select("id,display_name,avatar_url").in("id",actorIds);
@@ -277,7 +286,7 @@ async function renderPeople(){
   db.from("profiles").select("id,display_name,bio,country,interests,mood,avatar_url,created_at,last_seen_at").neq("id",user.id).order("created_at",{ascending:false}).limit(100),
   db.from("user_blocks").select("blocked_id").eq("blocker_id",user.id)
  ]);
- if(error||blockError){list.innerHTML="";toast("Không tải được danh sách thành viên.");return}
+ if(error||blockError){showRetryState(list,"Không tải được danh sách thành viên. Kiểm tra kết nối rồi thử lại.",renderPeople);return}
  const blockedIds=new Set((blocks||[]).map(x=>x.blocked_id));
  allPeople=(data||[]).filter(p=>!blockedIds.has(p.id)).map(p=>({id:p.id,name:p.display_name||"Lumio Member",country:p.country||"Chưa cập nhật quốc gia",mood:p.mood||"Chưa cập nhật tâm trạng",bio:p.bio||p.interests||"Đang khám phá LUMIO",interests:p.interests||"",initial:(p.display_name||"L").slice(0,1).toUpperCase(),avatar_url:p.avatar_url,last_seen_at:p.last_seen_at}));
  renderFilteredPeople();
@@ -286,7 +295,7 @@ let reportTargetId=null;
 function openReportModal(id,name){if(!db||!user){toast("Đăng nhập để gửi báo cáo.");return}reportTargetId=id;$("reportTargetName").textContent="Báo cáo thành viên: "+name;$("reportDetails").value="";$("reportStatus").textContent="";$("reportModal").classList.remove("hidden");$("reportCategory").focus()}
 function closeReportModal(){$("reportModal").classList.add("hidden");reportTargetId=null}
 async function submitUserReport(e){e.preventDefault();if(!db||!user||!reportTargetId)return;const button=$("submitReport"),details=$("reportDetails").value.trim();if(details.length<8){$("reportStatus").textContent="Vui lòng mô tả ít nhất 8 ký tự.";return}button.disabled=true;button.textContent="Đang gửi...";const {error}=await db.from("user_reports").insert({reporter_id:user.id,reported_user_id:reportTargetId,category:$("reportCategory").value,details});button.disabled=false;button.textContent="Gửi báo cáo";if(error){$("reportStatus").textContent="Chưa gửi được. Vui lòng thử lại.";return}closeReportModal();toast("Đã gửi báo cáo. Cảm ơn bạn đã giúp LUMIO an toàn hơn.")}
-async function loadBlockedUsers(){const root=$("blockedUsersList");if(!root)return;if(!db||!user){root.innerHTML='<p class="notice">Đăng nhập để quản lý danh sách đã chặn.</p>';return}root.innerHTML='<p class="notice">Đang tải danh sách...</p>';const {data:blocks,error}=await db.from("user_blocks").select("blocked_id,created_at").eq("blocker_id",user.id).order("created_at",{ascending:false});if(error){root.innerHTML='<p class="notice">Chưa tải được danh sách đã chặn.</p>';return}if(!blocks?.length){root.innerHTML='<p class="notice">Bạn chưa chặn thành viên nào.</p>';return}const ids=blocks.map(x=>x.blocked_id),{data:people}=await db.from("profiles").select("id,display_name,avatar_url").in("id",ids),map=new Map((people||[]).map(x=>[x.id,x]));root.innerHTML="";blocks.forEach(item=>{const p=map.get(item.blocked_id)||{},row=document.createElement("div");row.className="blocked-user-row";const av=document.createElement("span");av.className="avatar";paintAvatar(av,p.avatar_url,p.display_name||"L");const name=document.createElement("strong");name.textContent=p.display_name||"Thành viên LUMIO";const btn=document.createElement("button");btn.type="button";btn.className="secondary small";btn.textContent="Bỏ chặn";btn.onclick=async()=>{btn.disabled=true;const {error}=await db.from("user_blocks").delete().eq("blocker_id",user.id).eq("blocked_id",item.blocked_id);if(error){btn.disabled=false;toast("Chưa bỏ chặn được.");return}row.remove();await renderPeople();toast("Đã bỏ chặn thành viên.");if(!root.children.length)root.innerHTML='<p class="notice">Bạn chưa chặn thành viên nào.</p>'};row.append(av,name,btn);root.append(row)})}
+async function loadBlockedUsers(){const root=$("blockedUsersList");if(!root)return;if(!db||!user){root.innerHTML='<p class="notice">Đăng nhập để quản lý danh sách đã chặn.</p>';return}root.innerHTML='<p class="notice">Đang tải danh sách...</p>';const {data:blocks,error}=await db.from("user_blocks").select("blocked_id,created_at").eq("blocker_id",user.id).order("created_at",{ascending:false});if(error){showRetryState(root,"Chưa tải được danh sách đã chặn. Vui lòng thử lại.",loadBlockedUsers);return}if(!blocks?.length){root.innerHTML='<p class="notice">Bạn chưa chặn thành viên nào.</p>';return}const ids=blocks.map(x=>x.blocked_id),{data:people}=await db.from("profiles").select("id,display_name,avatar_url").in("id",ids),map=new Map((people||[]).map(x=>[x.id,x]));root.innerHTML="";blocks.forEach(item=>{const p=map.get(item.blocked_id)||{},row=document.createElement("div");row.className="blocked-user-row";const av=document.createElement("span");av.className="avatar";paintAvatar(av,p.avatar_url,p.display_name||"L");const name=document.createElement("strong");name.textContent=p.display_name||"Thành viên LUMIO";const btn=document.createElement("button");btn.type="button";btn.className="secondary small";btn.textContent="Bỏ chặn";btn.onclick=async()=>{btn.disabled=true;const {error}=await db.from("user_blocks").delete().eq("blocker_id",user.id).eq("blocked_id",item.blocked_id);if(error){btn.disabled=false;toast("Chưa bỏ chặn được.");return}row.remove();await renderPeople();toast("Đã bỏ chặn thành viên.");if(!root.children.length)root.innerHTML='<p class="notice">Bạn chưa chặn thành viên nào.</p>'};row.append(av,name,btn);root.append(row)})}
 function renderPersonCard(p,list,isDemo){
  const el=document.createElement("article");el.className="person";
  const top=document.createElement("div");top.className="person-top";
@@ -350,7 +359,7 @@ async function loadRooms(){
   db.from("chat_rooms").select("id,name,description,icon").order("name"),
   db.from("room_members").select("room_id,user_id")
  ]);
- if(error){root.innerHTML='<p class="notice">Không tải được phòng: '+escapeText(error.message)+'</p>';return}
+ if(error){showRetryState(root,"Không tải được danh sách phòng. Kiểm tra kết nối rồi thử lại.",loadRooms);return}
  const joined=new Set((members||[]).filter(x=>x.user_id===user.id).map(x=>x.room_id));
  root.innerHTML="";
  (rooms||[]).forEach(room=>{
@@ -417,7 +426,7 @@ async function loadMatches(){
  const visibleIds=visibleMatches.map(m=>m.user1===user.id?m.user2:m.user1);
  if(!visibleMatches.length){root.textContent="Chưa có cuộc trò chuyện nào.";return}
  const {data:profiles,error:profileError}=await db.from("profiles").select("id,display_name,country,avatar_url,last_seen_at").in("id",visibleIds);
- if(profileError){root.textContent="Không tải được hồ sơ kết nối: "+profileError.message;return}
+ if(profileError){showRetryState(root,"Không tải được hồ sơ kết nối. Vui lòng thử lại.",loadMatches);return}
  const {data:recentMessages,messageError}=await db.from("messages").select("id,sender_id,receiver_id,body,created_at,read_at").or("sender_id.eq."+user.id+",receiver_id.eq."+user.id).order("created_at",{ascending:false}).limit(500);
  const latestByUser=new Map(),unreadByUser=new Map();
  (recentMessages||[]).forEach(msg=>{
@@ -554,7 +563,7 @@ async function loadFeed(){
   window.__lumioProfileNames=new Map((profileRows||[]).map(p=>[p.id,p.display_name||"Lumio Member"]));
   root.innerHTML="";
   posts.forEach(post=>renderPostCard(post,profiles.get(post.author_id)||{},reactions.filter(x=>x.post_id===post.id),comments.filter(x=>x.post_id===post.id),root));
- }catch(error){root.innerHTML='<p class="notice">Chưa tải được bảng tin: '+escapeText(error.message)+'</p>'}
+ }catch(error){console.warn("LUMIO feed load failed:",error);showRetryState(root,"Chưa tải được bảng tin. Kiểm tra kết nối rồi thử lại.",loadFeed)}
  finally{feedLoading=false}
 }
 function renderPostCard(post,author,reactions,comments,root){

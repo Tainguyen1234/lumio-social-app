@@ -926,3 +926,9 @@ html[data-theme="dark"] #view-messages .message-thread.has-unread{border-color:#
 .feedback-status{margin:0;min-height:18px;color:#bd91f5;font-size:12px;font-weight:700;text-align:center}
 html[data-theme="dark"] .beta-feedback-form input,html[data-theme="dark"] .beta-feedback-form select,html[data-theme="dark"] .beta-feedback-form textarea{background:#ffffff0a}
 @media(max-width:380px){.beta-feedback-form{padding:13px}.rating-options{gap:6px}.rating-options span{width:38px;height:38px}}
+
+
+/* Safety controls on discovery cards */
+.person-actions .safety-action{padding:9px 11px;border:1px solid #b98adf45;border-radius:12px;background:#ffffff08;color:var(--muted);font-size:11px;font-weight:700}
+.person-actions .safety-action:active{background:#a977ed22;color:var(--text)}
+@media(max-width:390px){.person-actions .safety-action{padding:8px 9px;font-size:10px}}
